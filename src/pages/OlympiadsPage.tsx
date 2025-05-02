@@ -299,23 +299,23 @@ const OlympiadsPage: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select value={selectedYear || ""} onValueChange={setSelectedYear}>
+            <Select value={selectedYear || undefined} onValueChange={setSelectedYear}>
               <SelectTrigger>
                 <SelectValue placeholder="Учебный год" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все годы</SelectItem>
+                <SelectItem value="all">Все годы</SelectItem>
                 <SelectItem value="2024-2025">2024-2025</SelectItem>
                 <SelectItem value="2023-2024">2023-2024</SelectItem>
                 <SelectItem value="2022-2023">2022-2023</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedStage || ""} onValueChange={setSelectedStage}>
+            <Select value={selectedStage || undefined} onValueChange={setSelectedStage}>
               <SelectTrigger>
                 <SelectValue placeholder="Этап" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все этапы</SelectItem>
+                <SelectItem value="all">Все этапы</SelectItem>
                 <SelectItem value="Школьный">Школьный</SelectItem>
                 <SelectItem value="Муниципальный">Муниципальный</SelectItem>
                 <SelectItem value="Региональный">Региональный</SelectItem>
