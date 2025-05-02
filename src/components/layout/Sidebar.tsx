@@ -3,15 +3,12 @@ import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
-  Database, 
   Home, 
   School, 
-  User, 
   Users, 
   Calendar, 
   UserCheck, 
   Layout,
-  ChevronRight,
   FileText,
   Award,
   Upload,
@@ -19,7 +16,8 @@ import {
   Settings,
   BarChart,
   Book,
-  Info
+  Database,
+  Trophy,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,11 +30,12 @@ interface NavItemProps {
   label: string;
   isOpen: boolean;
   requiredRoles?: string[];
+  badge?: number;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isOpen, requiredRoles = [] }) => {
+const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isOpen, requiredRoles = [], badge }) => {
   // This would be fetched from a user context in a real app
-  const userRole = localStorage.getItem("userRole") || "guest";
+  const userRole = localStorage.getItem("userRole") || "admin";
   
   // Filter items based on role
   if (requiredRoles.length > 0 && !requiredRoles.includes(userRole)) {
@@ -48,14 +47,23 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isOpen, requir
       to={to}
       className={({ isActive }) =>
         cn(
-          "flex items-center py-2 px-4 rounded-md transition-colors",
+          "flex items-center py-2 px-4 rounded-md transition-colors relative",
           isActive ? "bg-bank-light-blue text-bank-blue font-medium" : "hover:bg-gray-100",
           !isOpen && "justify-center px-2"
         )
       }
     >
-      <Icon className={cn("h-5 w-5", isOpen && "mr-3")} />
-      {isOpen && <span>{label}</span>}
+      <Icon className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
+      {isOpen && <span className="truncate">{label}</span>}
+      
+      {badge !== undefined && badge > 0 && (
+        <span className={cn(
+          "bg-red-500 text-white text-xs rounded-full flex items-center justify-center absolute",
+          isOpen ? "right-2 top-2 w-5 h-5" : "-right-1 -top-1 w-4 h-4"
+        )}>
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
     </NavLink>
   );
 };
@@ -74,7 +82,7 @@ const NavSection: React.FC<{
   }
   
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       {isOpen && (
         <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500">
           {title}
@@ -104,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         isOpen ? "w-64" : "w-16"
       )}
     >
-      <div className="flex flex-col p-4 h-full overflow-y-auto">
+      <div className="flex flex-col p-3 h-full overflow-y-auto scrollbar-thin">
         <NavSection title="Главное" isOpen={isOpen}>
           <NavItem to="/dashboard" icon={Layout} label="Дашборд" isOpen={isOpen} />
         </NavSection>
@@ -123,13 +131,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             label="Наставники" 
             isOpen={isOpen}
             requiredRoles={["admin", "erudit", "municipality"]} 
-          />
-          <NavItem 
-            to="/users" 
-            icon={User} 
-            label="Пользователи" 
-            isOpen={isOpen}
-            requiredRoles={["admin"]} 
           />
         </NavSection>
 
@@ -174,14 +175,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           />
           <NavItem 
             to="/projects" 
-            icon={Info} 
-            label="Проекты" 
+            icon={Trophy} 
+            label="Конкурсы" 
             isOpen={isOpen}
             requiredRoles={["admin", "erudit", "municipality", "school"]}
           />
         </NavSection>
         
-        <NavSection title="Данные" isOpen={isOpen}>
+        <NavSection title="Аналитика" isOpen={isOpen}>
           <NavItem 
             to="/reports" 
             icon={FileText} 
@@ -196,6 +197,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             isOpen={isOpen}
             requiredRoles={["admin", "erudit"]}
           />
+        </NavSection>
+        
+        <NavSection title="Данные" isOpen={isOpen}>
           <NavItem 
             to="/import" 
             icon={Upload} 
@@ -219,6 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             label="Настройки" 
             isOpen={isOpen}
             requiredRoles={["admin"]}
+            badge={3}
           />
         </NavSection>
       </div>

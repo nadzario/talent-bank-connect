@@ -2,7 +2,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Users, Bell, Shield } from "lucide-react";
+import { Settings, Users, Bell, Shield, Eye, Lock } from "lucide-react";
 import RolePermissionsManager from "@/components/settings/RolePermissionsManager";
 import PendingAccountsManager from "@/components/settings/PendingAccountsManager";
 
@@ -45,9 +45,41 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Здесь будут располагаться общие настройки системы, такие как настройки интерфейса, региональные настройки и т.д.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <Eye className="h-5 w-5 text-bank-blue" />
+                      <CardTitle className="text-lg">Отображение данных</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Настройте отображение данных и интерфейс системы
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Здесь будут располагаться настройки интерфейса, отображения данных и региональные настройки.
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <Lock className="h-5 w-5 text-bank-blue" />
+                      <CardTitle className="text-lg">Системные функции</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Управление системными функциями и модулями
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Настройка доступа к модулям системы и дополнительным функциям.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -66,9 +98,29 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Настройка параметров уведомлений и способов их доставки.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Каналы уведомлений</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Настройка способов доставки уведомлений для разных типов пользователей.
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Шаблоны уведомлений</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Управление шаблонами и содержанием системных уведомлений.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -82,9 +134,29 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Настройка политик безопасности, паролей, двухфакторной аутентификации и журналов доступа.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Политика паролей</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Настройка требований к паролям и сроков их действия.
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Журналы доступа</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Просмотр и анализ журналов доступа к системе.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

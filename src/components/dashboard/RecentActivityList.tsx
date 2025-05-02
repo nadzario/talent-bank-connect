@@ -67,17 +67,19 @@ const RecentActivityList: React.FC = () => {
         <CardTitle>Недавняя активность</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {activityData.map((activity) => (
-            <div key={activity.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+            <div key={activity.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
                 {getActivityIcon(activity.type)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{activity.action}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {activity.user} • {activity.timestamp}
-                </p>
+              <div className="flex flex-col min-w-0 flex-1">
+                <p className="font-medium text-sm">{activity.action}</p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <span className="truncate">{activity.user}</span>
+                  <span className="mx-1">•</span>
+                  <span className="flex-shrink-0">{activity.timestamp}</span>
+                </div>
               </div>
             </div>
           ))}

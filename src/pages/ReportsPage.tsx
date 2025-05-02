@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -84,9 +85,9 @@ const ReportsPage: React.FC = () => {
     });
   };
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
     const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
   
@@ -97,7 +98,7 @@ const ReportsPage: React.FC = () => {
         fill="white" 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        className="text-xs"
+        className="text-xs font-medium"
       >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
@@ -240,15 +241,15 @@ const ReportsPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
+                  <RechartsPieChart margin={{ top: 0, right: 0, bottom: 30, left: 0 }}>
                     <Pie
                       data={profileData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      outerRadius={80}
+                      outerRadius={70}
                       fill="#8884d8"
                       dataKey="value"
                       label={renderCustomizedLabel}
@@ -257,8 +258,13 @@ const ReportsPage: React.FC = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
+                    <Legend 
+                      layout="horizontal" 
+                      verticalAlign="bottom" 
+                      align="center"
+                      wrapperStyle={{ bottom: 0 }}
+                    />
                     <Tooltip />
-                    <Legend layout="horizontal" verticalAlign="bottom" align="center" />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               </div>
