@@ -6,6 +6,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { LogIn, FilePlus, Trash2, FileEdit } from "lucide-react";
 
 interface Activity {
   id: number;
@@ -49,13 +50,13 @@ const activityData: Activity[] = [
 const getActivityIcon = (type: Activity["type"]) => {
   switch (type) {
     case "login":
-      return <span className="bg-blue-100 text-blue-600 p-1 rounded">Вход</span>;
+      return <LogIn className="h-5 w-5 text-blue-600" />;
     case "create":
-      return <span className="bg-green-100 text-green-600 p-1 rounded">Создание</span>;
+      return <FilePlus className="h-5 w-5 text-green-600" />;
     case "delete":
-      return <span className="bg-red-100 text-red-600 p-1 rounded">Удаление</span>;
+      return <Trash2 className="h-5 w-5 text-red-600" />;
     case "edit":
-      return <span className="bg-amber-100 text-amber-600 p-1 rounded">Изменение</span>;
+      return <FileEdit className="h-5 w-5 text-amber-600" />;
   }
 };
 
@@ -66,15 +67,15 @@ const RecentActivityList: React.FC = () => {
         <CardTitle>Недавняя активность</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <div className="space-y-4">
           {activityData.map((activity) => (
-            <div key={activity.id} className="flex items-start space-x-4">
-              <div className="w-20">
+            <div key={activity.id} className="flex items-center space-x-4 p-2 rounded-md hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
                 {getActivityIcon(activity.type)}
               </div>
-              <div className="flex-1">
-                <p className="font-medium">{activity.action}</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{activity.action}</p>
+                <p className="text-xs text-muted-foreground truncate">
                   {activity.user} • {activity.timestamp}
                 </p>
               </div>
