@@ -4,12 +4,19 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const MainLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { toast } = useToast();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+    toast({
+      title: sidebarOpen ? "Sidebar collapsed" : "Sidebar expanded",
+      description: "Navigation panel has been updated",
+      duration: 2000,
+    });
   };
 
   return (

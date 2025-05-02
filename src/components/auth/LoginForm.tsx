@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   username: z.string().min(1, "Логин обязателен"),
@@ -24,6 +25,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const LoginForm: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -34,16 +36,33 @@ const LoginForm: React.FC = () => {
   });
 
   const onSubmit = (values: FormValues) => {
-    // In a real app, this would connect to your authentication API
     console.log("Logging in with:", values);
-    toast({
-      title: "Выполнен вход",
-      description: "Вы успешно вошли в систему",
-    });
     
     // Hardcoded demo login for prototype
-    if (values.username === "admin" && values.password === "password") {
-      window.location.href = "/dashboard";
+    // In a real app, this would connect to your authentication API
+    let userRole: string | null = null;
+    
+    // Simple role-based auth for demonstration
+    if (values.username === "admin" && values.password === "admin") {
+      userRole = "admin";
+    } else if (values.username === "erudit" && values.password === "erudit") {
+      userRole = "erudit";
+    } else if (values.username === "school" && values.password === "school") {
+      userRole = "school";
+    } else if (values.username === "municipality" && values.password === "municipality") {
+      userRole = "municipality";
+    }
+    
+    if (userRole) {
+      localStorage.setItem("username", values.username);
+      localStorage.setItem("userRole", userRole);
+      
+      toast({
+        title: "Вход выполнен",
+        description: "Вы успешно вошли в систему",
+      });
+      
+      navigate("/dashboard");
     } else {
       toast({
         title: "Ошибка входа",
@@ -82,10 +101,27 @@ const LoginForm: React.FC = () => {
             </FormItem>
           )}
         />
+        <div className="flex justify-between items-center">
+          <div className="text-sm">
+            <Button variant="link" className="p-0 h-auto">
+              Забыли пароль?
+            </Button>
+          </div>
+        </div>
         <Button type="submit" className="w-full">
           Войти
         </Button>
       </form>
+      
+      <div className="mt-4 text-sm text-gray-500 text-center">
+        <p>Для тестирования используйте:</p>
+        <ul className="list-disc list-inside mt-1 text-left">
+          <li>admin / admin (Администратор)</li>
+          <li>erudit / erudit (Эрудит)</li>
+          <li>school / school (Школа)</li>
+          <li>municipality / municipality (Муниципалитет)</li>
+        </ul>
+      </div>
     </Form>
   );
 };
