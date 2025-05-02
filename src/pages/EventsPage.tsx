@@ -26,6 +26,7 @@ import { Award, Calendar, Plus, Search, Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface Event {
   id: number;
@@ -112,11 +113,34 @@ const eventsData: Event[] = [
 ];
 
 const EventsPage: React.FC = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   
-  const filteredEvents = activeTab === "all" 
-    ? eventsData 
-    : eventsData.filter(event => event.type === activeTab);
+  const filteredEvents = eventsData
+    .filter(event => {
+      // Фильтр по вкладкам
+      if (activeTab === "all") return true;
+      return event.type === activeTab;
+    })
+    .filter(event => {
+      // Поиск по названию, если есть поисковый запрос
+      if (!searchQuery) return true;
+      return event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+             event.organizer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             event.location.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleViewDetails = (event: Event) => {
+    toast({
+      title: "Просмотр мероприятия",
+      description: `Вы перешли к просмотру: ${event.title}`
+    });
+  };
 
   const getStatusBadge = (status: Event["status"]) => {
     switch (status) {
@@ -199,24 +223,26 @@ const EventsPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 space-y-4 md:space-y-0">
               <TabsList>
                 <TabsTrigger value="all">Все мероприятия</TabsTrigger>
                 <TabsTrigger value="olympiad">Олимпиады</TabsTrigger>
                 <TabsTrigger value="contest">Конкурсы</TabsTrigger>
               </TabsList>
               
-              <div className="relative w-[250px]">
+              <div className="relative w-full md:w-[250px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Поиск мероприятий..." 
-                  className="pl-8" 
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={handleSearch}
                 />
               </div>
             </div>
             
             <TabsContent value={activeTab}>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -230,30 +256,48 @@ const EventsPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell className="font-medium">{event.title}</TableCell>
-                        <TableCell>
-                          {event.type === "olympiad" ? "Олимпиада" : "Конкурс"}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(event.status)}
-                        </TableCell>
-                        <TableCell>{event.date}</TableCell>
-                        <TableCell>{event.location}</TableCell>
-                        <TableCell className="text-center">{event.participants}</TableCell>
-                        <TableCell className="text-right">
-                          <Link to={event.type === "olympiad" ? `/olympiads/${event.id}` : `/projects/${event.id}`}>
-                            <Button variant="ghost" size="sm">
-                              Подробнее
-                            </Button>
-                          </Link>
+                    {filteredEvents.length > 0 ? (
+                      filteredEvents.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell className="font-medium max-w-[300px] truncate">{event.title}</TableCell>
+                          <TableCell>
+                            {event.type === "olympiad" ? "Олимпиада" : "Конкурс"}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(event.status)}
+                          </TableCell>
+                          <TableCell>{event.date}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{event.location}</TableCell>
+                          <TableCell className="text-center">{event.participants}</TableCell>
+                          <TableCell className="text-right">
+                            <Link to={event.type === "olympiad" ? `/olympiads/${event.id}` : `/projects/${event.id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewDetails(event)}
+                              >
+                                Подробнее
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-10">
+                          Мероприятия не найдены
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>
+              
+              {filteredEvents.length > 0 && (
+                <div className="mt-4 text-sm text-muted-foreground">
+                  Показано {filteredEvents.length} из {eventsData.length} мероприятий
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

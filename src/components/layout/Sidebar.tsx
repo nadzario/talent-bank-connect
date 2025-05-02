@@ -18,6 +18,8 @@ import {
   Book,
   Database,
   Trophy,
+  HelpCircle,
+  Bell,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -90,6 +92,57 @@ const NavSection: React.FC<{
       )}
       <div className="space-y-1">{filteredChildren}</div>
     </div>
+  );
+};
+
+const SupportButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+  const handleSupportClick = () => {
+    // Здесь могла бы быть логика открытия чата поддержки
+    alert("Открытие чата поддержки");
+  };
+
+  return (
+    <button 
+      onClick={handleSupportClick}
+      className={cn(
+        "flex items-center py-2 px-4 rounded-md transition-colors bg-bank-light-blue text-bank-blue font-medium",
+        !isOpen && "justify-center px-2"
+      )}
+    >
+      <HelpCircle className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
+      {isOpen && <span className="truncate">Поддержка</span>}
+    </button>
+  );
+};
+
+const NotificationsButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+  const [hasNotifications] = useState(true);
+  
+  const handleNotificationsClick = () => {
+    // Логика открытия уведомлений
+    alert("Открытие панели уведомлений");
+  };
+
+  return (
+    <button 
+      onClick={handleNotificationsClick}
+      className={cn(
+        "flex items-center py-2 px-4 rounded-md transition-colors hover:bg-gray-100 relative",
+        !isOpen && "justify-center px-2"
+      )}
+    >
+      <Bell className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
+      {isOpen && <span className="truncate">Уведомления</span>}
+      
+      {hasNotifications && (
+        <span className={cn(
+          "bg-red-500 text-white text-xs rounded-full flex items-center justify-center absolute",
+          isOpen ? "right-2 top-2 w-5 h-5" : "-right-1 -top-1 w-4 h-4"
+        )}>
+          3
+        </span>
+      )}
+    </button>
   );
 };
 
@@ -184,16 +237,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         
         <NavSection title="Аналитика" isOpen={isOpen}>
           <NavItem 
-            to="/reports" 
-            icon={FileText} 
-            label="Отчеты" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit"]}
-          />
-          <NavItem 
             to="/analytics" 
             icon={BarChart} 
             label="Аналитика" 
+            isOpen={isOpen}
+            requiredRoles={["admin", "erudit", "municipality"]}
+          />
+          <NavItem 
+            to="/reports" 
+            icon={FileText} 
+            label="Отчеты" 
             isOpen={isOpen}
             requiredRoles={["admin", "erudit"]}
           />
@@ -226,6 +279,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             badge={3}
           />
         </NavSection>
+        
+        <div className="mt-auto space-y-2 pt-4 border-t border-gray-200">
+          <NotificationsButton isOpen={isOpen} />
+          <SupportButton isOpen={isOpen} />
+        </div>
       </div>
     </aside>
   );

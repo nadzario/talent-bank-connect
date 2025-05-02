@@ -75,8 +75,8 @@ const RecentActivityList: React.FC = () => {
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <p className="font-medium text-sm">{activity.action}</p>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <span className="truncate">{activity.user}</span>
+                <div className="flex flex-wrap items-center text-xs text-muted-foreground">
+                  <span className="truncate max-w-[120px] md:max-w-none">{activity.user}</span>
                   <span className="mx-1">•</span>
                   <span className="flex-shrink-0">{activity.timestamp}</span>
                 </div>
