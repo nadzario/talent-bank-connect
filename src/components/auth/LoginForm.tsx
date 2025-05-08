@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +25,9 @@ type FormValues = z.infer<typeof formSchema>;
 const LoginForm: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [email, setEmail] = useState("");
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,11 +38,11 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = (values: FormValues) => {
     console.log("Logging in with:", values);
-    
+
     // Hardcoded demo login for prototype
     // In a real app, this would connect to your authentication API
     let userRole: string | null = null;
-    
+
     // Simple role-based auth for demonstration
     if (values.username === "admin" && values.password === "admin") {
       userRole = "admin";
@@ -52,22 +53,43 @@ const LoginForm: React.FC = () => {
     } else if (values.username === "municipality" && values.password === "municipality") {
       userRole = "municipality";
     }
-    
+
     if (userRole) {
       localStorage.setItem("username", values.username);
       localStorage.setItem("userRole", userRole);
-      
+
       toast({
         title: "Вход выполнен",
         description: "Вы успешно вошли в систему",
       });
-      
+
       navigate("/dashboard");
     } else {
       toast({
         title: "Ошибка входа",
         description: "Неверный логин или пароль",
         variant: "destructive",
+      });
+    }
+  };
+
+  const onForgotPassword = async () => {
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      toast({
+        title: "Инструкции по восстановлению отправлены",
+        description: "Проверьте вашу электронную почту для дальнейших действий."
+      });
+      setShowRecovery(false);
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить инструкции по восстановлению.",
+        variant: "destructive"
       });
     }
   };
@@ -103,16 +125,28 @@ const LoginForm: React.FC = () => {
         />
         <div className="flex justify-between items-center">
           <div className="text-sm">
-            <Button variant="link" className="p-0 h-auto">
+            <Button
+              variant="link"
+              className="p-0 h-auto"
+              onClick={() => setShowRecovery(true)}
+            >
               Забыли пароль?
             </Button>
           </div>
         </div>
+        {showRecovery && (
+          <div>
+            <Input type="email" placeholder="Введите email" value={email} onChange={e => setEmail(e.target.value)}/>
+            <Button type="button" onClick={onForgotPassword}>
+              Отправить инструкции
+            </Button>
+          </div>
+        )}
         <Button type="submit" className="w-full">
           Войти
         </Button>
       </form>
-      
+
       <div className="mt-4 text-sm text-gray-500 text-center">
         <p>Для тестирования используйте:</p>
         <ul className="list-disc list-inside mt-1 text-left">

@@ -1,0 +1,177 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  login    String   @unique
+  password String
+  role     Role
+  logs     Log[]
+  school   School?  @relation("SchoolOperator")
+}
+
+enum Role {
+  ADMIN
+  ERUDIT
+  MUNICIPALITY
+  SCHOOL
+}
+
+model Mentor {
+  id           Int         @id @default(autoincrement())
+  lastName     String
+  firstName    String
+  middleName   String?
+  workplace    String
+  participations Participation[]
+}
+
+model Participation {
+  id         Int      @id @default(autoincrement())
+  student    Student  @relation(fields: [studentId], references: [id])
+  studentId  Int
+  mentor     Mentor   @relation(fields: [mentorId], references: [id])
+  mentorId   Int
+  status     String
+  points     Int
+}
+
+model Log {
+  id              Int      @id @default(autoincrement())
+  dateTime        DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          Int
+  eventType       EventType
+  eventGroupId    Int?
+  targetId        Int?
+  targetTable     String?
+  eventInfo       Json
+}
+
+enum EventType {
+  LOGIN
+  CREATE
+  DELETE
+  EDIT
+}
+
+model Municipality {
+  id      Int      @id @default(autoincrement())
+  name    String
+  schools School[]
+}
+
+model School {
+  id            Int           @id @default(autoincrement())
+  name          String
+  operator      User          @relation("SchoolOperator", fields: [operatorId], references: [id])
+  operatorId    Int          @unique
+  municipality  Municipality  @relation(fields: [municipalityId], references: [id])
+  municipalityId Int
+  classes       Class[]
+}
+
+model Class {
+  id           Int      @id @default(autoincrement())
+  yearStarted  Int
+  letter       String
+  school       School   @relation(fields: [schoolId], references: [id])
+  schoolId     Int
+  students     Student[]
+}
+
+model Student {
+  id                Int      @id @default(autoincrement())
+  snils             String   @unique
+  lastName          String
+  firstName         String
+  middleName        String?
+  birthDate         DateTime
+  phone             String?
+  email             String?
+  guardianFullName  String
+  guardianPhone     String
+  guardianEmail     String
+  class             Class    @relation(fields: [classId], references: [id])
+  classId           Int
+  participations    Participation[]
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  type        EventType
+  project     Project?
+  olympiad    Olympiad?
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int      @unique
+  name        String
+  date        DateTime
+  location    String
+  profile     Profile  @relation(fields: [profileId], references: [id])
+  profileId   Int
+}
+
+model Olympiad {
+  id          Int           @id @default(autoincrement())
+  event       Event         @relation(fields: [eventId], references: [id])
+  eventId     Int          @unique
+  academicYear String
+  stage       OlympiadStage
+  points      Int
+  profile     Profile      @relation(fields: [profileId], references: [id])
+  profileId   Int
+}
+
+enum OlympiadStage {
+  SCHOOL
+  MUNICIPAL
+  REGIONAL
+  FINAL
+}
+
+model Direction {
+  id           Int       @id @default(autoincrement())
+  name         String
+  isOlympiadOnly Boolean  @default(false)
+  profiles     Profile[]
+}
+
+model Profile {
+  id          Int        @id @default(autoincrement())
+  name        String
+  direction   Direction  @relation(fields: [directionId], references: [id])
+  directionId Int
+  projects    Project[]
+  olympiads   Olympiad[]
+}
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  title       String
+  text        String
+  type        NotificationType
+  recipientType RecipientType
+  recipientId  Int?
+}
+
+enum NotificationType {
+  TIP
+  NEWS
+}
+
+enum RecipientType {
+  MUNICIPALITY
+  SCHOOL
+  ALL
+}

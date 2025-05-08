@@ -1,4 +1,3 @@
-
 import React from "react";
 import StatCard from "@/components/dashboard/StatCard";
 import RecentActivityList from "@/components/dashboard/RecentActivityList";
@@ -13,8 +12,8 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Панель управления</h1>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard 
           title="Всего участников" 
           value="1,247" 
@@ -40,10 +39,10 @@ const Dashboard = () => {
           description="7 активных сейчас"
         />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentActivityList />
-        
+
         <div className="col-span-1 space-y-6">
           <Card>
             <CardHeader>
@@ -60,7 +59,7 @@ const Dashboard = () => {
                     </Button>
                   </Link>
                 </div>
-                
+
                 <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded-r-md">
                   <div className="font-medium">Летняя школа программирования</div>
                   <div className="text-sm text-gray-500">1-14 июня 2025</div>
@@ -70,7 +69,7 @@ const Dashboard = () => {
                     </Button>
                   </Link>
                 </div>
-                
+
                 <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded-r-md">
                   <div className="font-medium">Конкурс научных работ</div>
                   <div className="text-sm text-gray-500">25 июня 2025</div>
@@ -83,7 +82,7 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Напоминания</CardTitle>
@@ -101,7 +100,7 @@ const Dashboard = () => {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-md">
                   <div className="h-6 w-6 mt-0.5 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-yellow-600 text-xs">!</span>

@@ -1,14 +1,17 @@
-
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const MainLayout: React.FC = () => {
+  const { notifications } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -22,17 +25,19 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header toggleSidebar={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} />
-      <main
-        className={cn(
-          "pt-16 min-h-screen transition-all duration-300",
-          sidebarOpen ? "pl-64" : "pl-16"
-        )}
-      >
-        <div className="container mx-auto p-6">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex flex-col md:flex-row min-h-screen"> {/* Changed to flex-col for mobile */}
+        <Sidebar isOpen={sidebarOpen} isMobile={isMobile} /> {/* Added isMobile prop */}
+        <main
+          className={cn(
+            "pt-16 min-h-screen transition-all duration-300 flex-1",
+            isMobile ? "px-2" : sidebarOpen ? "md:pl-64" : "md:pl-16"
+          )}
+        >
+          <div className="container mx-auto p-4 md:p-6"> {/* Reduced padding on mobile */}
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -30,27 +29,54 @@ const ExportPage: React.FC = () => {
   const { toast } = useToast();
   const [exportFormat, setExportFormat] = useState("excel");
   const [currentTab, setCurrentTab] = useState("participants");
-  
+
   // Selected fields for each entity
   const [selectedParticipantFields, setSelectedParticipantFields] = useState<string[]>([
     "snils", "lastName", "firstName", "middleName", "birthDate", "phone", "email"
   ]);
-  
+
   const [selectedMentorFields, setSelectedMentorFields] = useState<string[]>([
     "lastName", "firstName", "middleName", "workplace", "phone", "email"
   ]);
-  
+
   const [selectedEventFields, setSelectedEventFields] = useState<string[]>([
     "name", "type", "date", "location", "profile"
   ]);
 
-  const handleExportData = () => {
-    // In a real app, this would generate a file based on selections
-    toast({
-      title: "Экспорт данных",
-      description: `Данные успешно экспортированы в формате ${exportFormat === "excel" ? "Excel" : exportFormat === "csv" ? "CSV" : "JSON"}.`,
-      duration: 3000,
-    });
+  const handleExportData = async () => {
+    try {
+      const selectedData = {
+        participants: selectedParticipantFields,
+        mentors: selectedMentorFields,
+        events: selectedEventFields
+      }
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: exportFormat, data: selectedData })
+      });
+
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export-${Date.now()}.${exportFormat}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Успешно",
+        description: "Данные экспортированы"
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось экспортировать данные",
+        variant: "destructive"
+      });
+    }
   };
 
   const toggleParticipantField = (field: string) => {
@@ -60,7 +86,7 @@ const ExportPage: React.FC = () => {
         : [...prev, field]
     );
   };
-  
+
   const toggleMentorField = (field: string) => {
     setSelectedMentorFields(prev => 
       prev.includes(field) 
@@ -68,7 +94,7 @@ const ExportPage: React.FC = () => {
         : [...prev, field]
     );
   };
-  
+
   const toggleEventField = (field: string) => {
     setSelectedEventFields(prev => 
       prev.includes(field) 
@@ -82,7 +108,7 @@ const ExportPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Экспорт данных</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
@@ -108,7 +134,7 @@ const ExportPage: React.FC = () => {
                     Мероприятия
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="participants">
                   <div className="space-y-4">
                     <div className="text-sm font-medium">Выберите поля для экспорта:</div>
@@ -180,7 +206,7 @@ const ExportPage: React.FC = () => {
                     </div>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="mentors">
                   <div className="space-y-4">
                     <div className="text-sm font-medium">Выберите поля для экспорта:</div>
@@ -236,7 +262,7 @@ const ExportPage: React.FC = () => {
                     </div>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="events">
                   <div className="space-y-4">
                     <div className="text-sm font-medium">Выберите поля для экспорта:</div>
@@ -288,7 +314,7 @@ const ExportPage: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <div>
           <Card>
             <CardHeader>
@@ -311,7 +337,7 @@ const ExportPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <Button 
                 onClick={handleExportData}
                 className="w-full"
@@ -324,7 +350,7 @@ const ExportPage: React.FC = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Экспортировать данные
               </Button>
-              
+
               <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
                 <div className="flex">
                   <FileText className="h-5 w-5 mr-3 flex-shrink-0 text-blue-800" />

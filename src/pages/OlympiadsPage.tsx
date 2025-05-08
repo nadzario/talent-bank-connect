@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -35,6 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Award, Download, Plus, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface Olympiad {
   id: number;
@@ -108,17 +108,34 @@ const OlympiadsPage: React.FC = () => {
     profile: "",
     date: ""
   });
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [selectedOlympiad, setSelectedOlympiad] = useState<Olympiad | null>(null);
 
-  // Filter olympiads based on search query and filters
-  const filteredOlympiads = olympiads.filter(olympiad => {
-    const matchesSearch = olympiad.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      olympiad.profile.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesYear = !selectedYear || olympiad.academicYear === selectedYear;
-    const matchesStage = !selectedStage || olympiad.stage === selectedStage;
-    
-    return matchesSearch && matchesYear && matchesStage;
-  });
+
+  const filterOlympiads = useCallback(() => {
+    let filtered = olympiads;
+    if (startDate) {
+      filtered = filtered.filter(olympiad => new Date(olympiad.date) >= startDate);
+    }
+    if (endDate) {
+      filtered = filtered.filter(olympiad => new Date(olympiad.date) <= endDate);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(olympiad => {
+        const matchesSearch = olympiad.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          olympiad.profile.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesSearch;
+      });
+    }
+    if (selectedYear) {
+      filtered = filtered.filter(olympiad => olympiad.academicYear === selectedYear);
+    }
+    if (selectedStage) {
+      filtered = filtered.filter(olympiad => olympiad.stage === selectedStage);
+    }
+    setOlympiads(filtered);
+  }, [startDate, endDate, searchQuery, selectedYear, selectedStage, olympiads]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -136,23 +153,21 @@ const OlympiadsPage: React.FC = () => {
   };
 
   const handleAddOlympiad = () => {
-    // In a real app, this would call an API
     const newId = Math.max(...olympiads.map(o => o.id)) + 1;
     const olympiadToAdd = { 
       ...newOlympiad, 
       id: newId,
       participants: 0
     };
-    
+
     setOlympiads(prev => [...prev, olympiadToAdd]);
     setIsDialogOpen(false);
-    
+
     toast({
       title: "Олимпиада добавлена",
       description: `"${newOlympiad.name}" успешно добавлена в систему.`
     });
-    
-    // Reset form
+
     setNewOlympiad({
       name: "",
       academicYear: "2024-2025",
@@ -163,7 +178,6 @@ const OlympiadsPage: React.FC = () => {
   };
 
   const handleExportData = () => {
-    // In a real app, this would generate a CSV/Excel file
     toast({
       title: "Экспорт данных",
       description: "Данные об олимпиадах успешно экспортированы."
@@ -174,6 +188,9 @@ const OlympiadsPage: React.FC = () => {
     setSelectedYear(null);
     setSelectedStage(null);
     setSearchQuery("");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    filterOlympiads();
   };
 
   return (
@@ -202,7 +219,7 @@ const OlympiadsPage: React.FC = () => {
                   Заполните информацию о новой олимпиаде
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Название олимпиады</Label>
@@ -214,7 +231,7 @@ const OlympiadsPage: React.FC = () => {
                     placeholder="Введите название олимпиады"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="academicYear">Учебный год</Label>
@@ -232,7 +249,7 @@ const OlympiadsPage: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="stage">Этап</Label>
                     <Select 
@@ -251,7 +268,7 @@ const OlympiadsPage: React.FC = () => {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="profile">Профиль</Label>
                   <Input 
@@ -262,7 +279,7 @@ const OlympiadsPage: React.FC = () => {
                     placeholder="Например: Математика, Информатика и т.д."
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="date">Дата проведения</Label>
                   <Input 
@@ -274,7 +291,7 @@ const OlympiadsPage: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Отмена</Button>
                 <Button onClick={handleAddOlympiad}>Сохранить</Button>
@@ -283,23 +300,23 @@ const OlympiadsPage: React.FC = () => {
           </Dialog>
         </div>
       </div>
-      
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Фильтры и поиск</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Поиск по названию или профилю..."
                 className="pl-10"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {setSearchQuery(e.target.value); filterOlympiads();}}
               />
             </div>
-            <Select value={selectedYear || undefined} onValueChange={setSelectedYear}>
+            <Select value={selectedYear || undefined} onValueChange={(value) => {setSelectedYear(value); filterOlympiads();}}>
               <SelectTrigger>
                 <SelectValue placeholder="Учебный год" />
               </SelectTrigger>
@@ -310,7 +327,7 @@ const OlympiadsPage: React.FC = () => {
                 <SelectItem value="2022-2023">2022-2023</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedStage || undefined} onValueChange={setSelectedStage}>
+            <Select value={selectedStage || undefined} onValueChange={(value) => {setSelectedStage(value); filterOlympiads();}}>
               <SelectTrigger>
                 <SelectValue placeholder="Этап" />
               </SelectTrigger>
@@ -322,8 +339,16 @@ const OlympiadsPage: React.FC = () => {
                 <SelectItem value="Заключительный">Заключительный</SelectItem>
               </SelectContent>
             </Select>
+            <div>
+              <Label htmlFor="start-date">Start Date</Label>
+              <DatePicker id="start-date" value={startDate} onChange={setStartDate} onBlur={filterOlympiads}/>
+            </div>
+            <div>
+              <Label htmlFor="end-date">End Date</Label>
+              <DatePicker id="end-date" value={endDate} onChange={setEndDate} onBlur={filterOlympiads}/>
+            </div>
           </div>
-          
+
           <div className="mt-4 text-right">
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               Сбросить фильтры
@@ -331,7 +356,7 @@ const OlympiadsPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
@@ -345,7 +370,7 @@ const OlympiadsPage: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOlympiads.map((olympiad) => (
+            {olympiads.map((olympiad) => (
               <TableRow key={olympiad.id}>
                 <TableCell className="font-medium">{olympiad.name}</TableCell>
                 <TableCell>{olympiad.academicYear}</TableCell>
@@ -355,8 +380,8 @@ const OlympiadsPage: React.FC = () => {
                 <TableCell className="text-right">{olympiad.participants}</TableCell>
               </TableRow>
             ))}
-            
-            {filteredOlympiads.length === 0 && (
+
+            {olympiads.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   <div className="flex flex-col items-center justify-center">
@@ -369,9 +394,9 @@ const OlympiadsPage: React.FC = () => {
             )}
           </TableBody>
         </Table>
-        
+
         <div className="p-4 border-t text-sm text-gray-500">
-          Показано {filteredOlympiads.length} из {olympiads.length} олимпиад
+          Показано {olympiads.length} из {mockOlympiads.length} олимпиад
         </div>
       </div>
     </div>

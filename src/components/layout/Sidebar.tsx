@@ -117,10 +117,25 @@ const SupportButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
 
 const NotificationsButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   const [hasNotifications] = useState(true);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: "Новая заявка", message: "Поступила новая заявка на рассмотрение" },
+    { id: 2, title: "Обновление системы", message: "Доступно обновление системы" }
+  ]);
   
   const handleNotificationsClick = () => {
-    // Логика открытия уведомлений
-    alert("Открытие панели уведомлений");
+    toast({
+      title: "Уведомления",
+      description: (
+        <div className="space-y-2">
+          {notifications.map(notification => (
+            <div key={notification.id} className="p-2 bg-gray-50 rounded">
+              <div className="font-medium">{notification.title}</div>
+              <div className="text-sm text-gray-600">{notification.message}</div>
+            </div>
+          ))}
+        </div>
+      )
+    });
   };
 
   return (
