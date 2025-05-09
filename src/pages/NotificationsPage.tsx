@@ -39,7 +39,7 @@ const NotificationsPage: React.FC = () => {
     if (activeTab === "all") {
       setFilteredNotifications(notifications);
     } else if (activeTab === "unread") {
-      setFilteredNotifications(notifications.filter(n => !n.read));
+      setFilteredNotifications(notifications.filter(n => !n.is_read));
     } else if (activeTab === "news") {
       setFilteredNotifications(notifications.filter(n => n.type === "NEWS"));
     } else if (activeTab === "tips") {
@@ -132,7 +132,7 @@ const NotificationsPage: React.FC = () => {
                       filteredNotifications.map((notification) => (
                         <TableRow 
                           key={notification.id} 
-                          className={notification.read ? "" : "bg-blue-50"}
+                          className={notification.is_read ? "" : "bg-blue-50"}
                         >
                           <TableCell>
                             <Badge variant={notification.type === "NEWS" ? "default" : "secondary"}>
@@ -143,9 +143,9 @@ const NotificationsPage: React.FC = () => {
                             {notification.title}
                           </TableCell>
                           <TableCell>{notification.text}</TableCell>
-                          <TableCell>{formatNotificationDate(notification.createdAt)}</TableCell>
+                          <TableCell>{formatNotificationDate(notification.created_at)}</TableCell>
                           <TableCell className="text-right">
-                            {!notification.read && (
+                            {!notification.is_read && (
                               <Button 
                                 variant="ghost" 
                                 size="sm" 

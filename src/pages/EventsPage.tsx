@@ -3,28 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, MapPin, Plus } from 'lucide-react';
-import { api } from '@/services/api';
-import { useToast } from '@/components/ui/use-toast';
-
-interface Event {
-  id: number;
-  type: 'project' | 'olympiad';
-  project?: {
-    name: string;
-    date: string;
-    location: string;
-    profile: {
-      name: string;
-    };
-  };
-  olympiad?: {
-    academicYear: string;
-    stage: string;
-    profile: {
-      name: string;
-    };
-  };
-}
+import { useToast } from '@/hooks/use-toast';
+import { Event, mockEvents } from '@/services/mockEvents';
 
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -32,23 +12,13 @@ const EventsPage: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadEvents();
-  }, []);
-
-  const loadEvents = async () => {
-    try {
-      const data = await api.getEvents();
-      setEvents(data);
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось загрузить события",
-        variant: "destructive"
-      });
-    } finally {
+    // Simulate API call
+    setLoading(true);
+    setTimeout(() => {
+      setEvents(mockEvents);
       setLoading(false);
-    }
-  };
+    }, 500);
+  }, []);
 
   const getStatusBadge = (type: string) => {
     const statusClasses = {
@@ -62,15 +32,22 @@ const EventsPage: React.FC = () => {
     );
   };
 
+  const handleAddEvent = () => {
+    toast({
+      title: "Добавление события",
+      description: "Функциональность добавления событий в разработке",
+    });
+  };
+
   if (loading) {
-    return <div>Загрузка...</div>;
+    return <div className="py-10 text-center">Загрузка...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">События</h1>
-        <Button onClick={() => {}}>
+        <Button onClick={handleAddEvent}>
           <Plus className="h-4 w-4 mr-2" />
           Добавить событие
         </Button>
@@ -82,30 +59,36 @@ const EventsPage: React.FC = () => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <CardTitle className="text-lg">
-                  {event.project?.name || `Олимпиада ${event.olympiad?.academicYear}`}
+                  {event.title}
                 </CardTitle>
                 {getStatusBadge(event.type)}
               </div>
               <CardDescription>
-                {event.project ? 'Проект' : `Этап: ${event.olympiad?.stage}`}
+                {event.type === 'project' ? 'Проект' : `Этап: ${event.stage}`}
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-2">
               <div className="flex flex-wrap gap-y-2 text-sm text-gray-500">
-                {event.project && (
-                  <>
-                    <div className="flex items-center mr-4">
-                      <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                      <span>{new Date(event.project.date).toLocaleDateString('ru-RU')}</span>
-                    </div>
-                    <div className="flex items-center mr-4">
-                      <MapPin className="h-3.5 w-3.5 mr-1" />
-                      <span>{event.project.location}</span>
-                    </div>
-                  </>
+                {event.type === 'project' && event.date && (
+                  <div className="flex items-center mr-4">
+                    <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                    <span>{new Date(event.date).toLocaleDateString('ru-RU')}</span>
+                  </div>
+                )}
+                {event.type === 'project' && event.location && (
+                  <div className="flex items-center mr-4">
+                    <MapPin className="h-3.5 w-3.5 mr-1" />
+                    <span>{event.location}</span>
+                  </div>
+                )}
+                {event.type === 'olympiad' && event.academicYear && (
+                  <div className="flex items-center mr-4">
+                    <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                    <span>{event.academicYear}</span>
+                  </div>
                 )}
                 <div>
-                  Профиль: {event.project?.profile.name || event.olympiad?.profile.name}
+                  Профиль: {event.profile}
                 </div>
               </div>
             </CardContent>

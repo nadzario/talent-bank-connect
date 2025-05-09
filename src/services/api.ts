@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationType, RecipientType } from "@/hooks/use-notifications";
 
 export const api = {
   // Users
@@ -74,67 +75,28 @@ export const api = {
     }
   },
   
-  // Events
+  // Events - mock implementation until we add events table to Supabase
   async getEvents() {
-    try {
-      // This is a simplified implementation since we don't have the complex relationships
-      // that were in the Prisma example
-      const { data, error } = await supabase
-        .from('events')
-        .select('*');
-      if (error) throw error;
-      
-      return data.map(event => ({
-        ...event,
-        type: event.type || 'unknown'
-      }));
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      throw error;
-    }
+    // Mock implementation - will be replaced when we add events table to Supabase
+    return import('@/services/mockEvents').then(module => module.mockEvents);
   },
 
   async createEvent(data) {
-    try {
-      const { data: newEvent, error } = await supabase
-        .from('events')
-        .insert(data)
-        .select();
-      if (error) throw error;
-      return newEvent[0];
-    } catch (error) {
-      console.error('Error creating event:', error);
-      throw error;
-    }
+    // Mock implementation
+    console.log('Create event (mock):', data);
+    return { ...data, id: Math.floor(Math.random() * 1000) };
   },
 
   async updateEvent(id, data) {
-    try {
-      const { data: updatedEvent, error } = await supabase
-        .from('events')
-        .update(data)
-        .eq('id', id)
-        .select();
-      if (error) throw error;
-      return updatedEvent[0];
-    } catch (error) {
-      console.error('Error updating event:', error);
-      throw error;
-    }
+    // Mock implementation
+    console.log('Update event (mock):', id, data);
+    return { ...data, id };
   },
 
   async deleteEvent(id) {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      return { id, success: true };
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      throw error;
-    }
+    // Mock implementation
+    console.log('Delete event (mock):', id);
+    return { id, success: true };
   },
 
   // Notifications
@@ -166,11 +128,21 @@ export const api = {
     }
   },
 
-  async createNotification(data) {
+  async createNotification(data: {
+    title: string;
+    text: string;
+    type: NotificationType;
+    recipient_type: RecipientType;
+    recipient_id?: number | null;
+  }) {
     try {
       const { data: newNotification, error } = await supabase
         .from('notifications')
-        .insert(data)
+        .insert({
+          ...data,
+          is_read: false,
+          created_at: new Date().toISOString()
+        })
         .select();
       if (error) throw error;
       return newNotification[0];

@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { api } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
 export type NotificationType = 'TIP' | 'NEWS';
 export type RecipientType = 'MUNICIPALITY' | 'SCHOOL' | 'ALL';
@@ -40,7 +40,7 @@ export function useNotifications(userRole?: string, userId?: number) {
         }
         
         // Use mock data if we don't have data from Supabase
-        let notificationsData = data && data.length > 0 ? data : [
+        let notificationsData: Notification[] = data && data.length > 0 ? data : [
           {
             id: 1,
             title: 'Новая заявка на регистрацию',
@@ -169,7 +169,7 @@ export function useNotifications(userRole?: string, userId?: number) {
         .order('created_at', { ascending: false });
         
       if (data) {
-        setNotifications(data);
+        setNotifications(data as Notification[]);
       }
     }
   };
