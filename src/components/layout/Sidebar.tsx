@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -30,10 +31,10 @@ interface NavigationItem {
 }
 
 const renderIcon = (
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
+  IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>>,
   className?: string
 ) => {
-  return <icon className={cn("h-4 w-4", className)} />;
+  return <IconComponent className={cn("h-4 w-4", className)} />;
 };
 
 const renderNavigationItems = (items: NavigationItem[], isOpen: boolean) => {
