@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -6,301 +5,182 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Home, 
   School, 
-  Users, 
-  Calendar, 
-  UserCheck, 
-  Layout,
+  User, 
+  Database,
+  Medal,
   FileText,
-  Award,
+  Users,
+  Settings,
+  Bell,
+  ChevronRight,
+  BookOpen,
+  BarChart,
   Upload,
   Download,
-  Settings,
-  BarChart,
-  Book,
-  Database,
-  Trophy,
-  HelpCircle,
-  Bell,
+  Lightbulb,
+  UserCog
 } from "lucide-react";
+import { useNotifications } from "@/hooks/use-notifications";
 
-interface SidebarProps {
-  isOpen: boolean;
+interface NavigationItem {
+  name: string;
+  href?: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  items?: { name: string; href: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; }[];
 }
 
-interface NavItemProps {
-  to: string;
-  icon: React.ElementType;
-  label: string;
-  isOpen: boolean;
-  requiredRoles?: string[];
-  badge?: number;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isOpen, requiredRoles = [], badge }) => {
-  // This would be fetched from a user context in a real app
-  const userRole = localStorage.getItem("userRole") || "admin";
-  
-  // Filter items based on role
-  if (requiredRoles.length > 0 && !requiredRoles.includes(userRole)) {
-    return null;
-  }
-  
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center py-2 px-4 rounded-md transition-colors relative",
-          isActive ? "bg-bank-light-blue text-bank-blue font-medium" : "hover:bg-gray-100",
-          !isOpen && "justify-center px-2"
-        )
-      }
-    >
-      <Icon className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
-      {isOpen && <span className="truncate">{label}</span>}
-      
-      {badge !== undefined && badge > 0 && (
-        <span className={cn(
-          "bg-red-500 text-white text-xs rounded-full flex items-center justify-center absolute",
-          isOpen ? "right-2 top-2 w-5 h-5" : "-right-1 -top-1 w-4 h-4"
-        )}>
-          {badge > 9 ? "9+" : badge}
-        </span>
-      )}
-    </NavLink>
-  );
+const renderIcon = (
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
+  className?: string
+) => {
+  return <icon className={cn("h-4 w-4", className)} />;
 };
 
-const NavSection: React.FC<{
-  title: string;
-  isOpen: boolean;
-  children: React.ReactNode;
-}> = ({ title, children, isOpen }) => {
-  // Filter out null children (filtered by role)
-  const filteredChildren = React.Children.toArray(children).filter(child => child !== null);
-  
-  // Don't render section if all children were filtered out
-  if (filteredChildren.length === 0) {
-    return null;
-  }
-  
+const renderNavigationItems = (items: NavigationItem[], isOpen: boolean) => {
+  return items.map((item) => {
+    if (item.items) {
+      return (
+        <details key={item.name}>
+          <summary className="flex items-center justify-between p-2 rounded-md hover:bg-gray-200">
+            <div className="flex items-center">
+              {renderIcon(item.icon)}
+              {isOpen && <span className="ml-2">{item.name}</span>}
+            </div>
+            {isOpen && <ChevronRight className="h-4 w-4 shrink-0 ml-1 transition-transform duration-200 [&[open]]:rotate-90" />}
+          </summary>
+          <div className="mt-2 space-y-1">
+            {item.items.map((subItem) => (
+              <NavLink
+                key={subItem.name}
+                to={subItem.href}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center p-2 rounded-md hover:bg-gray-200",
+                    isActive ? "bg-gray-200 font-medium" : ""
+                  )
+                }
+              >
+                {isOpen && <span className="ml-7">{subItem.name}</span>}
+              </NavLink>
+            ))}
+          </div>
+        </details>
+      );
+    } else {
+      return (
+        <NavLink
+          key={item.name}
+          to={item.href || ""}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center p-2 rounded-md hover:bg-gray-200",
+              isActive ? "bg-gray-200 font-medium" : ""
+            )
+          }
+        >
+          {renderIcon(item.icon)}
+          {isOpen && <span className="ml-2">{item.name}</span>}
+        </NavLink>
+      );
+    }
+  });
+};
+
+// Updated navigation items array to include Notifications
+const navigationItems: NavigationItem[] = [
+  { name: "Дашборд", href: "/", icon: Home },
+  { name: "Участники", href: "/participants", icon: User },
+  { name: "Наставники", href: "/mentors", icon: Users },
+  { name: "Школы", href: "/schools", icon: School },
+  { name: "Муниципалитеты", href: "/municipalities", icon: Database },
+  { name: "Классы", href: "/classes", icon: BookOpen },
+  {
+    name: "Мероприятия",
+    icon: Medal,
+    items: [
+      { name: "Список", href: "/events", icon: ChevronRight },
+      { name: "Проекты", href: "/projects", icon: ChevronRight },
+      { name: "Олимпиады", href: "/olympiads", icon: ChevronRight },
+    ],
+  },
+  {
+    name: "Аналитика",
+    icon: BarChart,
+    items: [
+      { name: "Общая", href: "/analytics", icon: ChevronRight },
+      { name: "Отчеты", href: "/reports", icon: FileText }
+    ],
+  },
+  {
+    name: "Данные",
+    icon: Database,
+    items: [
+      { name: "Импорт", href: "/import", icon: Upload },
+      { name: "Экспорт", href: "/export", icon: Download },
+    ],
+  },
+  { name: "Уведомления", href: "/notifications", icon: Bell },
+  { name: "Настройки", href: "/settings", icon: Settings },
+];
+
+const SidebarContent: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   return (
-    <div className="mb-4">
-      {isOpen && (
-        <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500">
-          {title}
-        </div>
-      )}
-      <div className="space-y-1">{filteredChildren}</div>
+    <div className="flex flex-col space-y-2">
+      {renderNavigationItems(navigationItems, isOpen)}
     </div>
   );
 };
 
-const SupportButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
-  const handleSupportClick = () => {
-    // Здесь могла бы быть логика открытия чата поддержки
-    alert("Открытие чата поддержки");
-  };
-
-  return (
-    <button 
-      onClick={handleSupportClick}
-      className={cn(
-        "flex items-center py-2 px-4 rounded-md transition-colors bg-bank-light-blue text-bank-blue font-medium",
-        !isOpen && "justify-center px-2"
-      )}
-    >
-      <HelpCircle className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
-      {isOpen && <span className="truncate">Поддержка</span>}
-    </button>
-  );
-};
-
+// Updated with notifications count badge
 const NotificationsButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   const { toast } = useToast();
-  const [hasNotifications] = useState(true);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Новая заявка", message: "Поступила новая заявка на рассмотрение" },
-    { id: 2, title: "Обновление системы", message: "Доступно обновление системы" }
-  ]);
-  
+  const { notifications, unreadCount } = useNotifications();
+
   const handleNotificationsClick = () => {
     toast({
-      title: "Уведомления",
-      description: (
-        <div className="space-y-2">
-          {notifications.map(notification => (
-            <div key={notification.id} className="p-2 bg-gray-50 rounded">
-              <div className="font-medium">{notification.title}</div>
-              <div className="text-sm text-gray-600">{notification.message}</div>
-            </div>
-          ))}
-        </div>
-      )
+      title: `${unreadCount} непрочитанных уведомлений`,
+      description: unreadCount > 0 
+        ? "У вас есть непрочитанные уведомления" 
+        : "У вас нет новых уведомлений",
+      duration: 3000,
     });
   };
 
+  // Return null if notifications are hidden in sidebar
+  if (!isOpen) return null;
+
   return (
-    <button 
+    <button
+      className="flex items-center justify-between w-full p-2 mt-4 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
       onClick={handleNotificationsClick}
-      className={cn(
-        "flex items-center py-2 px-4 rounded-md transition-colors hover:bg-gray-100 relative",
-        !isOpen && "justify-center px-2"
-      )}
     >
-      <Bell className={cn("h-5 w-5 flex-shrink-0", isOpen && "mr-3")} />
-      {isOpen && <span className="truncate">Уведомления</span>}
-      
-      {hasNotifications && (
-        <span className={cn(
-          "bg-red-500 text-white text-xs rounded-full flex items-center justify-center absolute",
-          isOpen ? "right-2 top-2 w-5 h-5" : "-right-1 -top-1 w-4 h-4"
-        )}>
-          3
+      <div className="flex items-center">
+        <Bell className="h-4 w-4 mr-2" />
+        <span>Уведомления</span>
+      </div>
+      {unreadCount > 0 && (
+        <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+          {unreadCount}
         </span>
       )}
     </button>
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  if (!mounted) {
-    // Avoid hydration issues
-    return null;
-  }
-  
+const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   return (
     <aside
       className={cn(
-        "bg-white border-r border-gray-200 h-screen transition-all duration-300 fixed top-0 left-0 z-40 pt-16",
-        isOpen ? "w-64" : "w-16"
+        "fixed left-0 top-0 z-50 flex flex-col h-screen bg-white border-r border-gray-200 w-64 transition-transform duration-300",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        "md:translate-x-0 md:sticky"
       )}
     >
-      <div className="flex flex-col p-3 h-full overflow-y-auto scrollbar-thin">
-        <NavSection title="Главное" isOpen={isOpen}>
-          <NavItem to="/dashboard" icon={Layout} label="Дашборд" isOpen={isOpen} />
-        </NavSection>
-
-        <NavSection title="Пользователи" isOpen={isOpen}>
-          <NavItem 
-            to="/participants" 
-            icon={Users} 
-            label="Участники" 
-            isOpen={isOpen} 
-            requiredRoles={["admin", "erudit", "school", "municipality"]}
-          />
-          <NavItem 
-            to="/mentors" 
-            icon={UserCheck} 
-            label="Наставники" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality"]} 
-          />
-        </NavSection>
-
-        <NavSection title="Организация" isOpen={isOpen}>
-          <NavItem 
-            to="/municipalities" 
-            icon={Database} 
-            label="Муниципалитеты" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit"]} 
-          />
-          <NavItem 
-            to="/schools" 
-            icon={School} 
-            label="Школы" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality"]}
-          />
-          <NavItem 
-            to="/classes" 
-            icon={Book} 
-            label="Классы" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality", "school"]}
-          />
-        </NavSection>
-
-        <NavSection title="Мероприятия" isOpen={isOpen}>
-          <NavItem 
-            to="/events" 
-            icon={Calendar} 
-            label="Все мероприятия" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality", "school"]} 
-          />
-          <NavItem 
-            to="/olympiads" 
-            icon={Award} 
-            label="Олимпиады" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality", "school"]}
-          />
-          <NavItem 
-            to="/projects" 
-            icon={Trophy} 
-            label="Конкурсы" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality", "school"]}
-          />
-        </NavSection>
-        
-        <NavSection title="Аналитика" isOpen={isOpen}>
-          <NavItem 
-            to="/analytics" 
-            icon={BarChart} 
-            label="Аналитика" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality"]}
-          />
-          <NavItem 
-            to="/reports" 
-            icon={FileText} 
-            label="Отчеты" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit"]}
-          />
-        </NavSection>
-        
-        <NavSection title="Данные" isOpen={isOpen}>
-          <NavItem 
-            to="/import" 
-            icon={Upload} 
-            label="Импорт данных" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality", "school"]}
-          />
-          <NavItem 
-            to="/export" 
-            icon={Download} 
-            label="Экспорт данных" 
-            isOpen={isOpen}
-            requiredRoles={["admin", "erudit", "municipality"]}
-          />
-        </NavSection>
-        
-        <NavSection title="Система" isOpen={isOpen}>
-          <NavItem 
-            to="/settings" 
-            icon={Settings} 
-            label="Настройки" 
-            isOpen={isOpen}
-            requiredRoles={["admin"]}
-            badge={3}
-          />
-        </NavSection>
-        
-        <div className="mt-auto space-y-2 pt-4 border-t border-gray-200">
-          <NotificationsButton isOpen={isOpen} />
-          <SupportButton isOpen={isOpen} />
-        </div>
+      <div className="flex items-center justify-center h-16 border-b border-gray-200">
+        <span className="text-lg font-semibold">Talent Database</span>
+      </div>
+      <div className="flex-grow p-4 overflow-y-auto">
+        <SidebarContent isOpen={isOpen} />
       </div>
     </aside>
   );

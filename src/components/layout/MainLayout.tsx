@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/use-notifications";
 
 const MainLayout: React.FC = () => {
-  const { notifications } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -22,6 +22,15 @@ const MainLayout: React.FC = () => {
       duration: 2000,
     });
   };
+
+  // Show notification badge in title if there are unread notifications
+  useEffect(() => {
+    if (unreadCount > 0) {
+      document.title = `(${unreadCount}) Talent Database`;
+    } else {
+      document.title = 'Talent Database';
+    }
+  }, [unreadCount]);
 
   return (
     <div className="min-h-screen bg-gray-50">

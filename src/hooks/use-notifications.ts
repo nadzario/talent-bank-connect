@@ -2,13 +2,17 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+
+export type NotificationType = 'TIP' | 'NEWS';
+export type RecipientType = 'MUNICIPALITY' | 'SCHOOL' | 'ALL';
 
 export interface Notification {
   id: number;
   title: string;
   text: string;
-  type: 'TIP' | 'NEWS';
-  recipientType: 'MUNICIPALITY' | 'SCHOOL' | 'ALL';
+  type: NotificationType;
+  recipientType: RecipientType;
   recipientId?: number | null;
   read: boolean;
   createdAt: string;
@@ -24,8 +28,9 @@ export function useNotifications(userRole?: string, userId?: number) {
     async function fetchNotifications() {
       try {
         setLoading(true);
-        // Предположим, что api.getNotifications будет реализовано в будущем
-        // Сейчас используем моковые данные, соответствующие схеме БД
+        
+        // In a real implementation, we'd fetch from Supabase
+        // For now, using mock data that matches our schema
         const mockNotifications: Notification[] = [
           {
             id: 1,
@@ -57,7 +62,7 @@ export function useNotifications(userRole?: string, userId?: number) {
           }
         ];
         
-        // Фильтрация уведомлений в зависимости от роли пользователя
+        // Filter notifications based on user role (will be replaced with real implementation)
         let filteredNotifications = mockNotifications;
         if (userRole === 'MUNICIPALITY' && userId) {
           filteredNotifications = mockNotifications.filter(n => 
@@ -73,7 +78,7 @@ export function useNotifications(userRole?: string, userId?: number) {
         
         setNotifications(filteredNotifications);
         
-        // Показываем новое уведомление, если оно не прочитано
+        // Show toast for unread notifications
         const unreadNotifications = filteredNotifications.filter(n => !n.read);
         if (unreadNotifications.length > 0) {
           toast({
@@ -100,14 +105,16 @@ export function useNotifications(userRole?: string, userId?: number) {
           : notification
       )
     );
-    // В реальном приложении здесь был бы API-запрос для обновления статуса в БД
+    // In real implementation, update Supabase
+    // supabase.from('notifications').update({ is_read: true }).eq('id', id);
   };
 
   const markAllAsRead = () => {
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
-    // В реальном приложении здесь был бы API-запрос для обновления статуса в БД
+    // In real implementation, update Supabase
+    // supabase.from('notifications').update({ is_read: true }).in('id', notifications.filter(n => !n.read).map(n => n.id));
   };
 
   return { 
