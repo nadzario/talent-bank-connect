@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, Locale } from "date-fns";
 import { ru } from "date-fns/locale";
 
 interface DatePickerProps {
@@ -20,6 +20,8 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   locale?: Locale;
+  value?: Date;
+  onChange?: (date: Date | undefined) => void;
 }
 
 export function DatePicker({ 
@@ -27,8 +29,16 @@ export function DatePicker({
   onSelect, 
   placeholder = "Выберите дату", 
   className,
-  locale = ru 
+  locale = ru,
+  value,
+  onChange
 }: DatePickerProps) {
+  const actualValue = value || selected;
+  const handleChange = (date: Date | undefined) => {
+    if (onChange) onChange(date);
+    if (onSelect) onSelect(date);
+  };
+  
   const formatDate = (date: Date) => {
     try {
       return format(date, "PPP", { locale });
@@ -45,19 +55,19 @@ export function DatePicker({
           variant={"outline"}
           className={cn(
             "w-[240px] justify-start text-left font-normal",
-            !selected && "text-muted-foreground",
+            !actualValue && "text-muted-foreground",
             className
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selected ? formatDate(selected) : <span>{placeholder}</span>}
+          {actualValue ? formatDate(actualValue) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          selected={selected}
-          onSelect={onSelect}
+          selected={actualValue}
+          onSelect={handleChange}
           initialFocus
           locale={locale}
         />

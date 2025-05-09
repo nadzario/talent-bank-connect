@@ -341,11 +341,19 @@ const OlympiadsPage: React.FC = () => {
             </Select>
             <div>
               <Label htmlFor="start-date">Start Date</Label>
-              <DatePicker id="start-date" value={startDate} onChange={setStartDate} onBlur={filterOlympiads}/>
+              <DatePicker 
+                value={startDate} 
+                onChange={setStartDate} 
+                onSelect={() => filterOlympiads()}
+              />
             </div>
             <div>
               <Label htmlFor="end-date">End Date</Label>
-              <DatePicker id="end-date" value={endDate} onChange={setEndDate} onBlur={filterOlympiads}/>
+              <DatePicker 
+                value={endDate} 
+                onChange={setEndDate} 
+                onSelect={() => filterOlympiads()}
+              />
             </div>
           </div>
 

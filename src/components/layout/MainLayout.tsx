@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
@@ -25,15 +26,15 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header toggleSidebar={toggleSidebar} />
-      <div className="flex flex-col md:flex-row min-h-screen"> {/* Changed to flex-col for mobile */}
-        <Sidebar isOpen={sidebarOpen} isMobile={isMobile} /> {/* Added isMobile prop */}
+      <div className="flex flex-col md:flex-row min-h-screen">
+        <Sidebar isOpen={sidebarOpen} />
         <main
           className={cn(
             "pt-16 min-h-screen transition-all duration-300 flex-1",
             isMobile ? "px-2" : sidebarOpen ? "md:pl-64" : "md:pl-16"
           )}
         >
-          <div className="container mx-auto p-4 md:p-6"> {/* Reduced padding on mobile */}
+          <div className="container mx-auto p-4 md:p-6">
             <Outlet />
           </div>
         </main>

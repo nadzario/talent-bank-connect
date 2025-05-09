@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Home, 
   School, 
@@ -116,6 +117,7 @@ const SupportButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
 };
 
 const NotificationsButton: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+  const { toast } = useToast();
   const [hasNotifications] = useState(true);
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Новая заявка", message: "Поступила новая заявка на рассмотрение" },
