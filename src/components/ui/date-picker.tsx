@@ -12,15 +12,32 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface DatePickerProps {
   selected?: Date;
   onSelect?: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  locale?: Locale;
 }
 
-export function DatePicker({ selected, onSelect, placeholder = "Pick a date", className }: DatePickerProps) {
+export function DatePicker({ 
+  selected, 
+  onSelect, 
+  placeholder = "Выберите дату", 
+  className,
+  locale = ru 
+}: DatePickerProps) {
+  const formatDate = (date: Date) => {
+    try {
+      return format(date, "PPP", { locale });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return format(date, "yyyy-MM-dd");
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -33,7 +50,7 @@ export function DatePicker({ selected, onSelect, placeholder = "Pick a date", cl
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selected ? format(selected, "PPP") : <span>{placeholder}</span>}
+          {selected ? formatDate(selected) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -42,6 +59,7 @@ export function DatePicker({ selected, onSelect, placeholder = "Pick a date", cl
           selected={selected}
           onSelect={onSelect}
           initialFocus
+          locale={locale}
         />
       </PopoverContent>
     </Popover>
