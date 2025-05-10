@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
+import { api } from '@/services/api';
 
 export type NotificationType = 'TIP' | 'NEWS';
 export type RecipientType = 'MUNICIPALITY' | 'SCHOOL' | 'ALL';
@@ -28,14 +28,16 @@ export function useNotifications(userRole?: string, userId?: number) {
     async function fetchNotifications() {
       try {
         setLoading(true);
+        console.log('Fetching notifications with role:', userRole, 'and userId:', userId);
         
-        // Fetch from Supabase if available
+        // Try to fetch from Supabase
         const { data, error } = await supabase
           .from('notifications')
           .select('*')
           .order('created_at', { ascending: false });
         
         if (error) {
+          console.error('Supabase error:', error);
           throw error;
         }
         
@@ -71,6 +73,8 @@ export function useNotifications(userRole?: string, userId?: number) {
           }
         ];
         
+        console.log('Notifications data:', notificationsData);
+        
         // Filter notifications based on user role
         let filteredNotifications = notificationsData;
         if (userRole === 'MUNICIPALITY' && userId) {
@@ -85,6 +89,7 @@ export function useNotifications(userRole?: string, userId?: number) {
           );
         }
         
+        console.log('Filtered notifications:', filteredNotifications);
         setNotifications(filteredNotifications);
         
         // Show toast for unread notifications
@@ -104,6 +109,23 @@ export function useNotifications(userRole?: string, userId?: number) {
     }
 
     fetchNotifications();
+    
+    // Set up realtime subscription for notifications
+    const channel = supabase
+      .channel('public:notifications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'notifications' }, 
+        (payload) => {
+          console.log('Realtime notification update:', payload);
+          // Refresh notifications when there's a change
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userRole, userId, toast]);
 
   const markAsRead = async (id: number) => {
@@ -118,11 +140,11 @@ export function useNotifications(userRole?: string, userId?: number) {
       );
       
       // Then update in Supabase
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-        
+      const result = await api.markNotificationAsRead(id);
+      
+      if (!result.success) {
+        throw new Error('Failed to mark notification as read');
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
       // Revert local change if update failed
@@ -146,20 +168,26 @@ export function useNotifications(userRole?: string, userId?: number) {
 
   const markAllAsRead = async () => {
     try {
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      
+      if (unreadIds.length === 0) return;
+      
       // Update locally first
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, is_read: true }))
       );
       
-      // Then update in Supabase for all unread notifications
-      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      // Then update in Supabase
+      const result = await api.markAllNotificationsAsRead(unreadIds);
       
-      if (unreadIds.length > 0) {
-        await supabase
-          .from('notifications')
-          .update({ is_read: true })
-          .in('id', unreadIds);
+      if (!result.success) {
+        throw new Error('Failed to mark all notifications as read');
       }
+      
+      toast({
+        title: 'Все уведомления прочитаны',
+        description: `${unreadIds.length} уведомлений отмечены как прочитанные`,
+      });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       // If update fails, refresh the list to ensure data consistency

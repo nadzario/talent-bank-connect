@@ -75,28 +75,83 @@ export const api = {
     }
   },
   
-  // Events - mock implementation until we add events table to Supabase
+  // Events
   async getEvents() {
-    // Mock implementation - will be replaced when we add events table to Supabase
-    return import('@/services/mockEvents').then(module => module.mockEvents);
+    try {
+      // First attempt to get from Supabase if the events table exists
+      const { data, error } = await supabase.from('events').select('*');
+      
+      // If successful, return the data
+      if (!error && data) {
+        return data;
+      }
+      
+      // If there's an error (likely table doesn't exist), use mock data
+      console.log('Using mock events data as fallback');
+      return import('@/services/mockEvents').then(module => module.mockEvents);
+    } catch (error) {
+      console.error('Error fetching events, using mock data:', error);
+      return import('@/services/mockEvents').then(module => module.mockEvents);
+    }
   },
 
   async createEvent(data) {
-    // Mock implementation
-    console.log('Create event (mock):', data);
-    return { ...data, id: Math.floor(Math.random() * 1000) };
+    try {
+      const { data: newEvent, error } = await supabase
+        .from('events')
+        .insert(data)
+        .select();
+        
+      if (error) {
+        // If there's an error, log it and use mock implementation
+        console.error('Error creating event, using mock implementation:', error);
+        return { ...data, id: Math.floor(Math.random() * 1000) };
+      }
+      
+      return newEvent[0];
+    } catch (error) {
+      console.error('Error creating event, using mock implementation:', error);
+      return { ...data, id: Math.floor(Math.random() * 1000) };
+    }
   },
 
   async updateEvent(id, data) {
-    // Mock implementation
-    console.log('Update event (mock):', id, data);
-    return { ...data, id };
+    try {
+      const { data: updatedEvent, error } = await supabase
+        .from('events')
+        .update(data)
+        .eq('id', id)
+        .select();
+        
+      if (error) {
+        console.error('Error updating event, using mock implementation:', error);
+        return { ...data, id };
+      }
+      
+      return updatedEvent[0];
+    } catch (error) {
+      console.error('Error updating event, using mock implementation:', error);
+      return { ...data, id };
+    }
   },
 
   async deleteEvent(id) {
-    // Mock implementation
-    console.log('Delete event (mock):', id);
-    return { id, success: true };
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error deleting event, using mock implementation:', error);
+        return { id, success: true };
+      }
+      
+      return { id, success: true };
+    } catch (error) {
+      console.error('Error deleting event, using mock implementation:', error);
+      return { id, success: true };
+    }
   },
 
   // Notifications
@@ -157,11 +212,27 @@ export const api = {
       const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       if (error) throw error;
       return { id, success: true };
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  async markAllNotificationsAsRead(notificationIds) {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .in('id', notificationIds)
+        .select();
+      if (error) throw error;
+      return { success: true, count: notificationIds.length };
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   },

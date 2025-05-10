@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, MapPin, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Event, mockEvents } from '@/services/mockEvents';
+import { Event } from '@/services/mockEvents';
+import { api } from '@/services/api';
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious 
+} from '@/components/ui/carousel';
 
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -12,13 +20,25 @@ const EventsPage: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setEvents(mockEvents);
-      setLoading(false);
-    }, 500);
-  }, []);
+    async function fetchEvents() {
+      setLoading(true);
+      try {
+        const eventsData = await api.getEvents();
+        setEvents(eventsData);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        toast({
+          title: "Ошибка загрузки",
+          description: "Не удалось загрузить события",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchEvents();
+  }, [toast]);
 
   const getStatusBadge = (type: string) => {
     const statusClasses = {
@@ -40,7 +60,7 @@ const EventsPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="py-10 text-center">Загрузка...</div>;
+    return <div className="py-10 text-center">Загрузка событий...</div>;
   }
 
   return (
@@ -53,9 +73,72 @@ const EventsPage: React.FC = () => {
         </Button>
       </div>
 
+      {events.length > 0 ? (
+        <div className="py-6">
+          <h2 className="text-xl font-semibold mb-4">Актуальные события</h2>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {events.slice(0, 5).map((event) => (
+                <CarouselItem key={event.id} className="md:basis-1/2 lg:basis-1/3">
+                  <Card className="h-full">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">
+                          {event.title}
+                        </CardTitle>
+                        {getStatusBadge(event.type)}
+                      </div>
+                      <CardDescription>
+                        {event.type === 'project' ? 'Проект' : `Этап: ${event.stage}`}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="flex flex-wrap gap-y-2 text-sm text-gray-500">
+                        {event.type === 'project' && event.date && (
+                          <div className="flex items-center mr-4">
+                            <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                            <span>{new Date(event.date).toLocaleDateString('ru-RU')}</span>
+                          </div>
+                        )}
+                        {event.type === 'project' && event.location && (
+                          <div className="flex items-center mr-4">
+                            <MapPin className="h-3.5 w-3.5 mr-1" />
+                            <span>{event.location}</span>
+                          </div>
+                        )}
+                        {event.type === 'olympiad' && event.academicYear && (
+                          <div className="flex items-center mr-4">
+                            <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                            <span>{event.academicYear}</span>
+                          </div>
+                        )}
+                        <div>
+                          Профиль: {event.profile}
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button variant="outline" className="w-full">Подробнее</Button>
+                    </CardFooter>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.map(event => (
-          <Card key={event.id} className="overflow-hidden">
+          <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <CardTitle className="text-lg">
