@@ -86,7 +86,7 @@ export const api = {
       
       // If successful, return the data
       if (!error && data) {
-        return data as Event[];
+        return data as unknown as Event[];
       }
       
       // Fall back to mock data
@@ -103,7 +103,15 @@ export const api = {
       // Try to insert into Supabase
       const { data: newEvent, error } = await supabase
         .from('events')
-        .insert(data)
+        .insert({
+          type: data.type,
+          title: data.title,
+          profile: data.profile,
+          date: data.date,
+          location: data.location,
+          stage: data.stage,
+          academic_year: data.type === 'olympiad' ? data.academicYear : null
+        })
         .select();
         
       if (error) {
@@ -111,7 +119,7 @@ export const api = {
         return { ...data, id: Math.floor(Math.random() * 1000) };
       }
       
-      return newEvent[0] as Event;
+      return newEvent[0] as unknown as Event;
     } catch (error) {
       console.error('Error creating event, using mock implementation:', error);
       return { ...data, id: Math.floor(Math.random() * 1000) } as Event;
@@ -122,7 +130,15 @@ export const api = {
     try {
       const { data: updatedEvent, error } = await supabase
         .from('events')
-        .update(data)
+        .update({
+          type: data.type,
+          title: data.title,
+          profile: data.profile,
+          date: data.date,
+          location: data.location,
+          stage: data.stage,
+          academic_year: data.type === 'olympiad' ? data.academicYear : null
+        })
         .eq('id', id)
         .select();
         
@@ -131,7 +147,7 @@ export const api = {
         return { ...data, id } as Event;
       }
       
-      return updatedEvent[0] as Event;
+      return updatedEvent[0] as unknown as Event;
     } catch (error) {
       console.error('Error updating event, using mock implementation:', error);
       return { ...data, id } as Event;

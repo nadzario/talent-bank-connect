@@ -24,6 +24,7 @@ const EventsPage: React.FC = () => {
       setLoading(true);
       try {
         const eventsData = await api.getEvents();
+        console.log('Fetched events:', eventsData);
         setEvents(eventsData);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -59,6 +60,11 @@ const EventsPage: React.FC = () => {
     });
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('ru-RU');
+  };
+
   if (loading) {
     return <div className="py-10 text-center">Загрузка событий...</div>;
   }
@@ -83,9 +89,9 @@ const EventsPage: React.FC = () => {
             }}
             className="w-full"
           >
-            <CarouselContent>
+            <CarouselContent className="-ml-4">
               {events.slice(0, 5).map((event) => (
-                <CarouselItem key={event.id} className="md:basis-1/2 lg:basis-1/3">
+                <CarouselItem key={event.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                   <Card className="h-full">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
@@ -103,7 +109,7 @@ const EventsPage: React.FC = () => {
                         {event.type === 'project' && event.date && (
                           <div className="flex items-center mr-4">
                             <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                            <span>{new Date(event.date).toLocaleDateString('ru-RU')}</span>
+                            <span>{formatDate(event.date)}</span>
                           </div>
                         )}
                         {event.type === 'project' && event.location && (
@@ -130,8 +136,10 @@ const EventsPage: React.FC = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            <div className="flex justify-center w-full mt-4">
+              <CarouselPrevious className="relative mr-2 static translate-y-0" />
+              <CarouselNext className="relative ml-2 static translate-y-0" />
+            </div>
           </Carousel>
         </div>
       ) : null}
@@ -155,7 +163,7 @@ const EventsPage: React.FC = () => {
                 {event.type === 'project' && event.date && (
                   <div className="flex items-center mr-4">
                     <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                    <span>{new Date(event.date).toLocaleDateString('ru-RU')}</span>
+                    <span>{formatDate(event.date)}</span>
                   </div>
                 )}
                 {event.type === 'project' && event.location && (

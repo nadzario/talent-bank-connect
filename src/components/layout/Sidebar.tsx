@@ -34,34 +34,39 @@ const renderIcon = (
   IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>>,
   className?: string
 ) => {
-  return <IconComponent className={cn("h-4 w-4", className)} />;
+  return <IconComponent className={cn("h-5 w-5", className)} />;
 };
 
 const renderNavigationItems = (items: NavigationItem[], isOpen: boolean) => {
   return items.map((item) => {
     if (item.items) {
       return (
-        <details key={item.name}>
-          <summary className="flex items-center justify-between p-2 rounded-md hover:bg-gray-200">
+        <details key={item.name} className="group">
+          <summary className="flex items-center justify-between p-2 rounded-md hover:bg-gray-200 cursor-pointer">
             <div className="flex items-center">
               {renderIcon(item.icon)}
-              {isOpen && <span className="ml-2">{item.name}</span>}
+              {isOpen && <span className="ml-3 text-sm">{item.name}</span>}
             </div>
-            {isOpen && <ChevronRight className="h-4 w-4 shrink-0 ml-1 transition-transform duration-200 [&[open]]:rotate-90" />}
+            {isOpen && <ChevronRight className="h-4 w-4 shrink-0 ml-1 transition-transform duration-200 group-open:rotate-90" />}
           </summary>
-          <div className="mt-2 space-y-1">
+          <div className="mt-2 space-y-1 ml-2">
             {item.items.map((subItem) => (
               <NavLink
                 key={subItem.name}
                 to={subItem.href}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center p-2 rounded-md hover:bg-gray-200",
+                    "flex items-center p-2 rounded-md hover:bg-gray-200 text-sm",
                     isActive ? "bg-gray-200 font-medium" : ""
                   )
                 }
               >
-                {isOpen && <span className="ml-7">{subItem.name}</span>}
+                {isOpen && (
+                  <>
+                    {renderIcon(subItem.icon, "h-4 w-4 mr-2")}
+                    <span>{subItem.name}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </div>
@@ -80,7 +85,7 @@ const renderNavigationItems = (items: NavigationItem[], isOpen: boolean) => {
           }
         >
           {renderIcon(item.icon)}
-          {isOpen && <span className="ml-2">{item.name}</span>}
+          {isOpen && <span className="ml-3 text-sm">{item.name}</span>}
         </NavLink>
       );
     }
@@ -172,17 +177,20 @@ const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-50 flex flex-col h-screen bg-white border-r border-gray-200 w-64 transition-transform duration-300",
-        isOpen ? "translate-x-0" : "-translate-x-full",
+        "fixed left-0 top-16 z-40 flex flex-col h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-transform duration-300",
+        isOpen ? "w-64" : "w-16",
+        isOpen ? "translate-x-0" : "-translate-x-0",
         "md:translate-x-0 md:sticky"
       )}
     >
-      <div className="flex items-center justify-center h-16 border-b border-gray-200">
-        <span className="text-lg font-semibold">Банк Одаренных Детей</span>
-      </div>
       <div className="flex-grow p-4 overflow-y-auto">
         <SidebarContent isOpen={isOpen} />
       </div>
+      {isOpen && (
+        <div className="p-4 border-t border-gray-200">
+          <NotificationsButton isOpen={isOpen} />
+        </div>
+      )}
     </aside>
   );
 };
