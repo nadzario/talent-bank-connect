@@ -1,213 +1,110 @@
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
-import { api } from '@/services/api';
-
-export type NotificationType = 'TIP' | 'NEWS';
-export type RecipientType = 'MUNICIPALITY' | 'SCHOOL' | 'ALL';
+export type NotificationType = "TIP" | "NEWS";
+export type RecipientType = "MUNICIPALITY" | "SCHOOL" | "ALL";
 
 export interface Notification {
   id: number;
-  title: string;
-  text: string;
-  type: NotificationType;
-  recipient_type: RecipientType;
-  recipient_id?: number | null;
-  is_read: boolean;
   created_at: string;
+  is_read: boolean;
+  recipient_id: number | null;
+  recipient_type: RecipientType;
+  text: string;
+  title: string;
+  type: NotificationType;
 }
 
-export function useNotifications(userRole?: string, userId?: number) {
+export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchNotifications() {
-      try {
-        setLoading(true);
-        console.log('Fetching notifications with role:', userRole, 'and userId:', userId);
-        
-        // Try to fetch from Supabase
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
-        }
-        
-        // Use mock data if we don't have data from Supabase
-        let notificationsData: Notification[] = data && data.length > 0 ? data : [
-          {
-            id: 1,
-            title: 'Новая заявка на регистрацию',
-            text: 'Поступила новая заявка на регистрацию от школы №123',
-            type: 'NEWS',
-            recipient_type: 'ALL',
-            is_read: false,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 2,
-            title: 'Обновление системы',
-            text: 'Система была обновлена до последней версии. Добавлено разделение мероприятий на олимпиады и конкурсы.',
-            type: 'TIP',
-            recipient_type: 'ALL',
-            is_read: false,
-            created_at: new Date(Date.now() - 86400000).toISOString()
-          },
-          {
-            id: 3,
-            title: 'Новые данные по муниципалитету',
-            text: 'Добавлены новые статистические данные по вашему муниципалитету.',
-            type: 'NEWS',
-            recipient_type: 'MUNICIPALITY',
-            recipient_id: 1,
-            is_read: true,
-            created_at: new Date(Date.now() - 172800000).toISOString()
-          }
-        ];
-        
-        console.log('Notifications data:', notificationsData);
-        
-        // Filter notifications based on user role
-        let filteredNotifications = notificationsData;
-        if (userRole === 'MUNICIPALITY' && userId) {
-          filteredNotifications = notificationsData.filter(n => 
-            n.recipient_type === 'ALL' || 
-            (n.recipient_type === 'MUNICIPALITY' && (!n.recipient_id || n.recipient_id === userId))
-          );
-        } else if (userRole === 'SCHOOL' && userId) {
-          filteredNotifications = notificationsData.filter(n => 
-            n.recipient_type === 'ALL' || 
-            (n.recipient_type === 'SCHOOL' && (!n.recipient_id || n.recipient_id === userId))
-          );
-        }
-        
-        console.log('Filtered notifications:', filteredNotifications);
-        setNotifications(filteredNotifications);
-        
-        // Show toast for unread notifications
-        const unreadNotifications = filteredNotifications.filter(n => !n.is_read);
-        if (unreadNotifications.length > 0) {
-          toast({
-            title: `У вас ${unreadNotifications.length} новых уведомлений`,
-            description: unreadNotifications[0].title,
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching notifications:', err);
-        setError('Не удалось загрузить уведомления');
-      } finally {
-        setLoading(false);
-      }
-    }
+  const userId = "your_user_id"; // Replace with actual user ID
+  const userRole = "ADMIN"; // Replace with actual user role
 
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getNotifications(userRole, userId);
+      setNotifications(data);
+    } catch (e) {
+      setError("Failed to fetch notifications");
+      console.error("Failed to fetch notifications:", e);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить уведомления",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, userId, userRole]);
+
+  useEffect(() => {
     fetchNotifications();
-    
-    // Set up realtime subscription for notifications
-    const channel = supabase
-      .channel('public:notifications')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'notifications' }, 
-        (payload) => {
-          console.log('Realtime notification update:', payload);
-          // Refresh notifications when there's a change
-          fetchNotifications();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userRole, userId, toast]);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const count = notifications.filter((n) => !n.is_read).length;
+    setUnreadCount(count);
+  }, [notifications]);
 
   const markAsRead = async (id: number) => {
     try {
-      // Update locally first for better UX
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, is_read: true } 
-            : notification
+      await api.markNotificationAsRead(id);
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id ? { ...notification, is_read: true } : notification
         )
       );
-      
-      // Then update in Supabase
-      const result = await api.markNotificationAsRead(id);
-      
-      if (!result.success) {
-        throw new Error('Failed to mark notification as read');
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      // Revert local change if update failed
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (data) {
-        setNotifications(prev =>
-          prev.map(notification =>
-            notification.id === id
-              ? { ...notification, is_read: data.is_read }
-              : notification
-          )
-        );
-      }
+      setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
+      toast({
+        title: "Уведомление отмечено как прочитанное",
+      });
+    } catch (e) {
+      console.error("Failed to mark notification as read:", e);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отметить уведомление как прочитанное",
+        variant: "destructive",
+      });
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
-      
-      if (unreadIds.length === 0) return;
-      
-      // Update locally first
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, is_read: true }))
+      const unreadNotificationIds = notifications
+        .filter((notification) => !notification.is_read)
+        .map((notification) => notification.id);
+      await api.markAllNotificationsAsRead(unreadNotificationIds);
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) => ({ ...notification, is_read: true }))
       );
-      
-      // Then update in Supabase
-      const result = await api.markAllNotificationsAsRead(unreadIds);
-      
-      if (!result.success) {
-        throw new Error('Failed to mark all notifications as read');
-      }
-      
+      setUnreadCount(0);
       toast({
-        title: 'Все уведомления прочитаны',
-        description: `${unreadIds.length} уведомлений отмечены как прочитанные`,
+        title: "Все уведомления отмечены как прочитанные",
       });
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-      // If update fails, refresh the list to ensure data consistency
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (data) {
-        setNotifications(data as Notification[]);
-      }
+    } catch (e) {
+      console.error("Failed to mark all notifications as read:", e);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отметить все уведомления как прочитанные",
+        variant: "destructive",
+      });
     }
   };
 
-  return { 
-    notifications, 
-    loading, 
+  return {
+    notifications,
+    loading,
     error,
     markAsRead,
     markAllAsRead,
-    unreadCount: notifications.filter(n => !n.is_read).length
+    unreadCount,
   };
-}
+};
