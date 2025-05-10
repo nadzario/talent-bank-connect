@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationType, RecipientType } from "@/hooks/use-notifications";
+import { Event, mockEvents } from "./mockEvents";
 
 export const api = {
   // Users
@@ -76,46 +77,48 @@ export const api = {
   },
   
   // Events
-  async getEvents() {
+  async getEvents(): Promise<Event[]> {
     try {
-      // First attempt to get from Supabase if the events table exists
-      const { data, error } = await supabase.from('events').select('*');
+      // Try to get events from Supabase
+      const { data, error } = await supabase
+        .from('events')
+        .select('*');
       
       // If successful, return the data
       if (!error && data) {
-        return data;
+        return data as Event[];
       }
       
-      // If there's an error (likely table doesn't exist), use mock data
+      // Fall back to mock data
       console.log('Using mock events data as fallback');
-      return import('@/services/mockEvents').then(module => module.mockEvents);
+      return mockEvents;
     } catch (error) {
       console.error('Error fetching events, using mock data:', error);
-      return import('@/services/mockEvents').then(module => module.mockEvents);
+      return mockEvents;
     }
   },
 
-  async createEvent(data) {
+  async createEvent(data: Omit<Event, 'id'>) {
     try {
+      // Try to insert into Supabase
       const { data: newEvent, error } = await supabase
         .from('events')
         .insert(data)
         .select();
         
       if (error) {
-        // If there's an error, log it and use mock implementation
         console.error('Error creating event, using mock implementation:', error);
         return { ...data, id: Math.floor(Math.random() * 1000) };
       }
       
-      return newEvent[0];
+      return newEvent[0] as Event;
     } catch (error) {
       console.error('Error creating event, using mock implementation:', error);
-      return { ...data, id: Math.floor(Math.random() * 1000) };
+      return { ...data, id: Math.floor(Math.random() * 1000) } as Event;
     }
   },
 
-  async updateEvent(id, data) {
+  async updateEvent(id: number, data: Partial<Event>) {
     try {
       const { data: updatedEvent, error } = await supabase
         .from('events')
@@ -125,17 +128,17 @@ export const api = {
         
       if (error) {
         console.error('Error updating event, using mock implementation:', error);
-        return { ...data, id };
+        return { ...data, id } as Event;
       }
       
-      return updatedEvent[0];
+      return updatedEvent[0] as Event;
     } catch (error) {
       console.error('Error updating event, using mock implementation:', error);
-      return { ...data, id };
+      return { ...data, id } as Event;
     }
   },
 
-  async deleteEvent(id) {
+  async deleteEvent(id: number) {
     try {
       const { error } = await supabase
         .from('events')

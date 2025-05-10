@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -178,7 +178,7 @@ const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
       )}
     >
       <div className="flex items-center justify-center h-16 border-b border-gray-200">
-        <span className="text-lg font-semibold">Talent Database</span>
+        <span className="text-lg font-semibold">Банк Одаренных Детей</span>
       </div>
       <div className="flex-grow p-4 overflow-y-auto">
         <SidebarContent isOpen={isOpen} />

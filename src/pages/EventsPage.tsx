@@ -46,7 +46,7 @@ const EventsPage: React.FC = () => {
       olympiad: "bg-blue-100 text-blue-800",
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${statusClasses[type]}`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${statusClasses[type as keyof typeof statusClasses]}`}>
         {type === "project" ? "Проект" : "Олимпиада"}
       </span>
     );
