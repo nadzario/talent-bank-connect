@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, MapPin, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Event } from '@/services/mockEvents';
 import { api } from '@/services/api';
+import { Event } from '@/services/api/eventService';
 import { 
   Carousel, 
   CarouselContent, 
@@ -24,7 +24,6 @@ const EventsPage: React.FC = () => {
       setLoading(true);
       try {
         const eventsData = await api.getEvents();
-        console.log('Fetched events:', eventsData);
         setEvents(eventsData);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -47,7 +46,7 @@ const EventsPage: React.FC = () => {
       olympiad: "bg-blue-100 text-blue-800",
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${statusClasses[type as keyof typeof statusClasses]}`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${statusClasses[type as keyof typeof statusClasses] || "bg-gray-100 text-gray-800"}`}>
         {type === "project" ? "Проект" : "Олимпиада"}
       </span>
     );

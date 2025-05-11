@@ -1,54 +1,77 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Event, mockEvents } from "../mockEvents";
+import { supabase } from "@/lib/supabase";
+
+export interface Event {
+  id: number;
+  title: string;
+  type: string;
+  profile: string;
+  date?: string;
+  location?: string;
+  stage?: string;
+  academicYear?: string;
+  created_at?: string;
+}
 
 export const eventService = {
   async getEvents(): Promise<Event[]> {
     try {
-      // Try to get events from Supabase
       const { data, error } = await supabase
         .from('events')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      // If successful, return the data
-      if (!error && data) {
-        return data as unknown as Event[];
-      }
+      if (error) throw error;
       
-      // Fall back to mock data
-      console.log('Using mock events data as fallback');
-      return mockEvents;
+      // Map the data to the Event interface
+      return (data || []).map(event => ({
+        id: event.id,
+        title: event.title,
+        type: event.type,
+        profile: event.profile,
+        date: event.date,
+        location: event.location,
+        stage: event.stage,
+        academicYear: event.academic_year,
+        created_at: event.created_at
+      }));
     } catch (error) {
-      console.error('Error fetching events, using mock data:', error);
-      return mockEvents;
+      console.error('Error fetching events:', error);
+      throw error;
     }
   },
 
-  async createEvent(data: Omit<Event, 'id'>) {
+  async createEvent(data: Omit<Event, 'id' | 'created_at'>) {
     try {
-      // Try to insert into Supabase
       const { data: newEvent, error } = await supabase
         .from('events')
         .insert({
-          type: data.type,
           title: data.title,
+          type: data.type,
           profile: data.profile,
           date: data.date,
           location: data.location,
           stage: data.stage,
-          academic_year: data.type === 'olympiad' ? data.academicYear : null
+          academic_year: data.academicYear
         })
         .select();
         
-      if (error) {
-        console.error('Error creating event, using mock implementation:', error);
-        return { ...data, id: Math.floor(Math.random() * 1000) };
-      }
+      if (error) throw error;
       
-      return newEvent[0] as unknown as Event;
+      return {
+        id: newEvent[0].id,
+        title: newEvent[0].title,
+        type: newEvent[0].type,
+        profile: newEvent[0].profile,
+        date: newEvent[0].date,
+        location: newEvent[0].location,
+        stage: newEvent[0].stage,
+        academicYear: newEvent[0].academic_year,
+        created_at: newEvent[0].created_at
+      };
     } catch (error) {
-      console.error('Error creating event, using mock implementation:', error);
-      return { ...data, id: Math.floor(Math.random() * 1000) } as Event;
+      console.error('Error creating event:', error);
+      throw error;
     }
   },
 
@@ -57,26 +80,33 @@ export const eventService = {
       const { data: updatedEvent, error } = await supabase
         .from('events')
         .update({
-          type: data.type,
           title: data.title,
+          type: data.type,
           profile: data.profile,
           date: data.date,
           location: data.location,
           stage: data.stage,
-          academic_year: data.type === 'olympiad' ? data.academicYear : null
+          academic_year: data.academicYear
         })
         .eq('id', id)
         .select();
         
-      if (error) {
-        console.error('Error updating event, using mock implementation:', error);
-        return { ...data, id } as Event;
-      }
+      if (error) throw error;
       
-      return updatedEvent[0] as unknown as Event;
+      return {
+        id: updatedEvent[0].id,
+        title: updatedEvent[0].title,
+        type: updatedEvent[0].type,
+        profile: updatedEvent[0].profile,
+        date: updatedEvent[0].date,
+        location: updatedEvent[0].location,
+        stage: updatedEvent[0].stage,
+        academicYear: updatedEvent[0].academic_year,
+        created_at: updatedEvent[0].created_at
+      };
     } catch (error) {
-      console.error('Error updating event, using mock implementation:', error);
-      return { ...data, id } as Event;
+      console.error('Error updating event:', error);
+      throw error;
     }
   },
 
@@ -87,15 +117,12 @@ export const eventService = {
         .delete()
         .eq('id', id);
         
-      if (error) {
-        console.error('Error deleting event, using mock implementation:', error);
-        return { id, success: true };
-      }
+      if (error) throw error;
       
       return { id, success: true };
     } catch (error) {
-      console.error('Error deleting event, using mock implementation:', error);
-      return { id, success: true };
+      console.error('Error deleting event:', error);
+      throw error;
     }
   }
 };

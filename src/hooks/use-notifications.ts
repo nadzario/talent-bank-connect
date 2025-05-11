@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +24,11 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
 
-  const userId = "your_user_id"; // Replace with actual user ID
-  const userRole = "ADMIN"; // Replace with actual user role
-
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getNotifications(userRole, userId);
+      const data = await api.getNotifications();
       setNotifications(data);
     } catch (e) {
       setError("Failed to fetch notifications");
@@ -43,7 +41,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, userId, userRole]);
+  }, [toast]);
 
   useEffect(() => {
     fetchNotifications();
@@ -81,6 +79,9 @@ export const useNotifications = () => {
       const unreadNotificationIds = notifications
         .filter((notification) => !notification.is_read)
         .map((notification) => notification.id);
+        
+      if (unreadNotificationIds.length === 0) return;
+      
       await api.markAllNotificationsAsRead(unreadNotificationIds);
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) => ({ ...notification, is_read: true }))

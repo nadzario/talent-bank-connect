@@ -1,9 +1,9 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { NotificationType, RecipientType } from "@/hooks/use-notifications";
 
 export const notificationService = {
-  async getNotifications(userRole, userId) {
+  async getNotifications() {
     try {
       const { data, error } = await supabase
         .from('notifications')
@@ -11,20 +11,7 @@ export const notificationService = {
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      
-      // Filter notifications based on role and ID if provided
-      if (userRole && userId) {
-        return data.filter(notification => {
-          if (notification.recipient_type === 'ALL') return true;
-          if (notification.recipient_type === userRole) {
-            if (!notification.recipient_id) return true;
-            return notification.recipient_id === userId;
-          }
-          return false;
-        });
-      }
-      
-      return data;
+      return data || [];
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw error;
@@ -42,11 +29,15 @@ export const notificationService = {
       const { data: newNotification, error } = await supabase
         .from('notifications')
         .insert({
-          ...data,
-          is_read: false,
-          created_at: new Date().toISOString()
+          title: data.title,
+          text: data.text,
+          type: data.type,
+          recipient_type: data.recipient_type,
+          recipient_id: data.recipient_id,
+          is_read: false
         })
         .select();
+
       if (error) throw error;
       return newNotification[0];
     } catch (error) {
@@ -55,13 +46,14 @@ export const notificationService = {
     }
   },
 
-  async markNotificationAsRead(id) {
+  async markNotificationAsRead(id: number) {
     try {
       const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', id)
         .select();
+
       if (error) throw error;
       return { id, success: true };
     } catch (error) {
@@ -70,13 +62,14 @@ export const notificationService = {
     }
   },
 
-  async markAllNotificationsAsRead(notificationIds) {
+  async markAllNotificationsAsRead(notificationIds: number[]) {
     try {
       const { data, error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .in('id', notificationIds)
         .select();
+
       if (error) throw error;
       return { success: true, count: notificationIds.length };
     } catch (error) {
