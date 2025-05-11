@@ -10,7 +10,10 @@ export const notificationService = {
         .select('*')
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
       return data || [];
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -38,7 +41,10 @@ export const notificationService = {
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating notification:', error);
+        throw error;
+      }
       return newNotification[0];
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -54,7 +60,10 @@ export const notificationService = {
         .eq('id', id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        throw error;
+      }
       return { id, success: true };
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -70,7 +79,10 @@ export const notificationService = {
         .in('id', notificationIds)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        throw error;
+      }
       return { success: true, count: notificationIds.length };
     } catch (error) {
       console.error('Error marking all notifications as read:', error);

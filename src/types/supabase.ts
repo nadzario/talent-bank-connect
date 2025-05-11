@@ -169,7 +169,73 @@ export interface Database {
           created_at?: string
         }
       }
-      // Add other table types here...
+      events: {
+        Row: {
+          id: number
+          title: string
+          type: string
+          profile: string
+          date: string | null
+          location: string | null
+          stage: string | null
+          academic_year: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          title: string
+          type: string
+          profile: string
+          date?: string | null
+          location?: string | null
+          stage?: string | null
+          academic_year?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          title?: string
+          type?: string
+          profile?: string
+          date?: string | null
+          location?: string | null
+          stage?: string | null
+          academic_year?: string | null
+          created_at?: string | null
+        }
+      }
+      notifications: {
+        Row: {
+          id: number
+          title: string
+          text: string
+          type: 'TIP' | 'NEWS'
+          recipient_type: 'MUNICIPALITY' | 'SCHOOL' | 'ALL'
+          recipient_id: number | null
+          is_read: boolean | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          title: string
+          text: string
+          type: 'TIP' | 'NEWS'
+          recipient_type: 'MUNICIPALITY' | 'SCHOOL' | 'ALL'
+          recipient_id?: number | null
+          is_read?: boolean | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          title?: string
+          text?: string
+          type?: 'TIP' | 'NEWS'
+          recipient_type?: 'MUNICIPALITY' | 'SCHOOL' | 'ALL'
+          recipient_id?: number | null
+          is_read?: boolean | null
+          created_at?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

@@ -21,7 +21,10 @@ export const eventService = {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching events:', error);
+        throw error;
+      }
       
       // Map the data to the Event interface
       return (data || []).map(event => ({
@@ -56,7 +59,10 @@ export const eventService = {
         })
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating event:', error);
+        throw error;
+      }
       
       return {
         id: newEvent[0].id,
@@ -91,7 +97,10 @@ export const eventService = {
         .eq('id', id)
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating event:', error);
+        throw error;
+      }
       
       return {
         id: updatedEvent[0].id,
@@ -117,7 +126,10 @@ export const eventService = {
         .delete()
         .eq('id', id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting event:', error);
+        throw error;
+      }
       
       return { id, success: true };
     } catch (error) {

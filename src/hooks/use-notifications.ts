@@ -107,5 +107,6 @@ export const useNotifications = () => {
     markAsRead,
     markAllAsRead,
     unreadCount,
+    refresh: fetchNotifications
   };
 };

@@ -41,7 +41,7 @@ export type Database = {
       events: {
         Row: {
           academic_year: string | null
-          created_at: string
+          created_at: string | null
           date: string | null
           id: number
           location: string | null
@@ -52,7 +52,7 @@ export type Database = {
         }
         Insert: {
           academic_year?: string | null
-          created_at?: string
+          created_at?: string | null
           date?: string | null
           id?: number
           location?: string | null
@@ -63,7 +63,7 @@ export type Database = {
         }
         Update: {
           academic_year?: string | null
-          created_at?: string
+          created_at?: string | null
           date?: string | null
           id?: number
           location?: string | null
@@ -157,6 +157,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "public.events": {
+        Row: {
+          academic_year: string | null
+          created_at: string
+          date: string | null
+          id: number
+          location: string | null
+          profile: string
+          stage: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          academic_year?: string | null
+          created_at?: string
+          date?: string | null
+          id?: number
+          location?: string | null
+          profile: string
+          stage?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          academic_year?: string | null
+          created_at?: string
+          date?: string | null
+          id?: number
+          location?: string | null
+          profile?: string
+          stage?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
       }
       schools: {
         Row: {
