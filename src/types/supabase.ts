@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -55,6 +56,116 @@ export interface Database {
           first_name?: string
           middle_name?: string | null
           workplace?: string
+          created_at?: string
+        }
+      }
+      students: {
+        Row: {
+          id: number
+          snils: string
+          last_name: string
+          first_name: string
+          middle_name: string | null
+          birth_date: string
+          phone: string | null
+          email: string | null
+          guardian_full_name: string
+          guardian_phone: string
+          guardian_email: string
+          class_id: number
+          created_at?: string
+        }
+        Insert: {
+          id?: number
+          snils: string
+          last_name: string
+          first_name: string
+          middle_name?: string | null
+          birth_date: string
+          phone?: string | null
+          email?: string | null
+          guardian_full_name: string
+          guardian_phone: string
+          guardian_email: string
+          class_id: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          snils?: string
+          last_name?: string
+          first_name?: string
+          middle_name?: string | null
+          birth_date?: string
+          phone?: string | null
+          email?: string | null
+          guardian_full_name?: string
+          guardian_phone?: string
+          guardian_email?: string
+          class_id?: number
+          created_at?: string
+        }
+      }
+      classes: {
+        Row: {
+          id: number
+          year_started: number
+          letter: string
+          school_id: number
+          created_at?: string
+        }
+        Insert: {
+          id?: number
+          year_started: number
+          letter: string
+          school_id: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          year_started?: number
+          letter?: string
+          school_id?: number
+          created_at?: string
+        }
+      }
+      schools: {
+        Row: {
+          id: number
+          name: string
+          operator_id: string
+          municipality_id: number
+          created_at?: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          operator_id: string
+          municipality_id: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          operator_id?: string
+          municipality_id?: number
+          created_at?: string
+        }
+      }
+      municipalities: {
+        Row: {
+          id: number
+          name: string
+          created_at?: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
           created_at?: string
         }
       }

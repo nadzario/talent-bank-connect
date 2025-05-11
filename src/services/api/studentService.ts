@@ -1,5 +1,10 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
+import type { Database } from '@/types/supabase';
+
+type Student = Database['public']['Tables']['students']['Row'];
+type StudentInsert = Database['public']['Tables']['students']['Insert'];
+type StudentUpdate = Database['public']['Tables']['students']['Update'];
 
 export const studentService = {
   async getStudents() {
@@ -18,7 +23,7 @@ export const studentService = {
     }
   },
 
-  async createStudent(data) {
+  async createStudent(data: StudentInsert) {
     try {
       const { data: newStudent, error } = await supabase
         .from('students')
@@ -32,7 +37,7 @@ export const studentService = {
     }
   },
 
-  async updateStudent(id, data) {
+  async updateStudent(id: number, data: StudentUpdate) {
     try {
       const { data: updatedStudent, error } = await supabase
         .from('students')
@@ -47,7 +52,7 @@ export const studentService = {
     }
   },
 
-  async deleteStudent(id) {
+  async deleteStudent(id: number) {
     try {
       const { data, error } = await supabase
         .from('students')
