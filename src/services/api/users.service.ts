@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/supabase';
+import type { Database } from '@/integrations/supabase/types';
 
 // According to our database schema, we should be using the profiles table
 // which is linked to auth.users
@@ -31,9 +31,18 @@ export const usersService = {
     school_id?: number | null;
     municipality_id?: number | null;
   }) {
+    // Check if role is valid according to database schema
+    // Ensure it matches the available roles in the database
+    const role = profile.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL";
+    
     const { data, error } = await supabase
       .from('profiles')
-      .insert(profile)
+      .insert({
+        id: profile.id,
+        role: role,
+        school_id: profile.school_id,
+        municipality_id: profile.municipality_id
+      })
       .select();
     if (error) throw error;
     return data[0];
@@ -44,9 +53,16 @@ export const usersService = {
     school_id?: number | null;
     municipality_id?: number | null;
   }) {
+    // Check if role is valid according to database schema
+    const validUpdates = {
+      ...(updates.role && { role: updates.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL" }),
+      ...(updates.school_id !== undefined && { school_id: updates.school_id }),
+      ...(updates.municipality_id !== undefined && { municipality_id: updates.municipality_id })
+    };
+    
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(validUpdates)
       .eq('id', id)
       .select();
     if (error) throw error;
