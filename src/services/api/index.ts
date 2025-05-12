@@ -8,6 +8,7 @@ import { municipalityService } from './municipalityService';
 import { schoolService } from './schoolService';
 import { classService } from './classService';
 import { studentsService } from './students.service';
+import { usersService } from './users.service';
 
 export const api = {
   // Events
@@ -18,6 +19,12 @@ export const api = {
   
   // Users
   getUsers: userService.getUsers,
+  
+  // Extended Users API
+  getUserProfiles: usersService.getUsers,
+  getUserProfileById: usersService.getUserById,
+  createUserProfile: usersService.createProfile,
+  updateUserProfile: usersService.updateProfile,
   
   // Students
   getStudents: studentService.getStudents,
