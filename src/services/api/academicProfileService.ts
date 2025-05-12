@@ -1,5 +1,10 @@
 
 import { supabase } from '@/lib/supabase';
+import { Database } from '@/integrations/supabase/types';
+
+type ProfileRow = Database['public']['Tables']['academic_profiles']['Row'];
+type ProfileInsert = Database['public']['Tables']['academic_profiles']['Insert'];
+type ProfileUpdate = Database['public']['Tables']['academic_profiles']['Update'];
 
 export const academicProfileService = {
   async getProfiles() {
@@ -8,7 +13,8 @@ export const academicProfileService = {
       .select(`
         *,
         direction:direction_id(*)
-      `);
+      `)
+      .order('name', { ascending: true });
     if (error) throw error;
     return data;
   },
@@ -21,15 +27,25 @@ export const academicProfileService = {
         direction:direction_id(*)
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
 
-  async createProfile(profileData: {
-    name: string;
-    direction_id: number;
-  }) {
+  async getProfilesByDirectionId(directionId: number) {
+    const { data, error } = await supabase
+      .from('academic_profiles')
+      .select(`
+        *,
+        direction:direction_id(*)
+      `)
+      .eq('direction_id', directionId)
+      .order('name', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  async createProfile(profileData: ProfileInsert) {
     const { data, error } = await supabase
       .from('academic_profiles')
       .insert(profileData)
@@ -38,10 +54,7 @@ export const academicProfileService = {
     return data[0];
   },
 
-  async updateProfile(id: number, updates: {
-    name?: string;
-    direction_id?: number;
-  }) {
+  async updateProfile(id: number, updates: ProfileUpdate) {
     const { data, error } = await supabase
       .from('academic_profiles')
       .update(updates)

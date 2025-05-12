@@ -1,16 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -19,328 +11,610 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Plus, Search } from "lucide-react";
+import { api } from "@/services/api";
+import { Loader2, Search, UserPlus, Edit, Trash, Download, Filter, RefreshCw, Eye } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ParticipantForm from "@/components/participants/ParticipantForm";
+import ParticipantsFilters from "@/components/participants/ParticipantsFilters";
+import ParticipantCard from "@/components/participants/ParticipantCard";
 
-// Types for our data
-interface Participant {
+export type Participant = {
   id: number;
-  snils: string;
-  lastName: string;
-  firstName: string;
-  middleName: string;
-  birthDate: string;
-  phone: string;
-  email: string;
-  representativeName: string;
-  representativePhone: string;
-  representativeEmail: string;
-  schoolId: number;
-  classId: number;
-}
-
-const mockParticipants: Participant[] = [
-  {
-    id: 1,
-    snils: "123-456-789 00",
-    lastName: "Иванов",
-    firstName: "Иван",
-    middleName: "Иванович",
-    birthDate: "2012-05-15",
-    phone: "+7 (999) 123-45-67",
-    email: "ivanov@example.com",
-    representativeName: "Иванова Мария Петровна",
-    representativePhone: "+7 (999) 987-65-43",
-    representativeEmail: "ivanova@example.com",
-    schoolId: 1,
-    classId: 1
-  },
-  {
-    id: 2,
-    snils: "987-654-321 00",
-    lastName: "Петров",
-    firstName: "Петр",
-    middleName: "Петрович",
-    birthDate: "2011-10-22",
-    phone: "+7 (999) 111-22-33",
-    email: "petrov@example.com",
-    representativeName: "Петрова Анна Ивановна",
-    representativePhone: "+7 (999) 444-55-66",
-    representativeEmail: "petrova@example.com",
-    schoolId: 2,
-    classId: 2
-  },
-  {
-    id: 3,
-    snils: "111-222-333 00",
-    lastName: "Сидорова",
-    firstName: "Анна",
-    middleName: "Александровна",
-    birthDate: "2013-03-07",
-    phone: "+7 (999) 777-88-99",
-    email: "sidorova@example.com",
-    representativeName: "Сидоров Александр Петрович",
-    representativePhone: "+7 (999) 555-44-33",
-    representativeEmail: "sidorov@example.com",
-    schoolId: 1,
-    classId: 3
-  }
-];
+  student_id: number;
+  mentor_id: number;
+  status: string;
+  points: number;
+  student: {
+    id: number;
+    last_name: string;
+    first_name: string;
+    middle_name?: string;
+    snils: string;
+    birth_date: string;
+    [key: string]: any;
+  };
+  mentor: {
+    id: number;
+    last_name: string;
+    first_name: string;
+    middle_name?: string;
+    workplace: string;
+    [key: string]: any;
+  };
+};
 
 const ParticipantsPage: React.FC = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
+  
+  // State
   const [searchQuery, setSearchQuery] = useState("");
-  const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newParticipant, setNewParticipant] = useState<Omit<Participant, 'id'>>({
-    snils: "",
-    lastName: "",
-    firstName: "",
-    middleName: "",
-    birthDate: "",
-    phone: "",
-    email: "",
-    representativeName: "",
-    representativePhone: "",
-    representativeEmail: "",
-    schoolId: 1,
-    classId: 1
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [mentorFilter, setMentorFilter] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  
+  // Fetch data
+  const { data: participants = [], isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['participants'],
+    queryFn: api.getParticipations,
   });
 
-  // Filter participants based on search query
-  const filteredParticipants = participants.filter(participant => 
-    participant.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    participant.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    participant.middleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    participant.snils.includes(searchQuery)
-  );
+  const { data: students = [] } = useQuery({
+    queryKey: ['students'],
+    queryFn: api.getStudents,
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewParticipant(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const { data: mentors = [] } = useQuery({
+    queryKey: ['mentors'],
+    queryFn: api.getMentors,
+  });
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: api.createParticipation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['participants'] });
+      toast({
+        title: "Участие добавлено",
+        description: "Новая запись об участии успешно создана"
+      });
+      setIsCreateDialogOpen(false);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Ошибка",
+        description: `Не удалось создать запись: ${err.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number, data: any }) => api.updateParticipation(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['participants'] });
+      toast({
+        title: "Участие обновлено",
+        description: "Запись об участии успешно обновлена"
+      });
+      setIsEditDialogOpen(false);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Ошибка",
+        description: `Не удалось обновить запись: ${err.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteParticipation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['participants'] });
+      toast({
+        title: "Участие удалено",
+        description: "Запись об участии успешно удалена"
+      });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Ошибка",
+        description: `Не удалось удалить запись: ${err.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Filter and search participants
+  const filteredParticipants = participants.filter((participant: Participant) => {
+    const matchesSearch = searchQuery === "" || 
+      participant.student?.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      participant.student?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      participant.mentor?.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      participant.mentor?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      participant.status?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesMentor = mentorFilter === null || participant.mentor_id === mentorFilter;
+    const matchesStatus = statusFilter === null || participant.status === statusFilter;
+    
+    return matchesSearch && matchesMentor && matchesStatus;
+  });
+
+  // Handlers
+  const handleCreateParticipant = (data: any) => {
+    createMutation.mutate(data);
   };
 
-  const handleAddParticipant = () => {
-    // In a real app, this would call an API
-    const newId = Math.max(...participants.map(p => p.id)) + 1;
-    const participantToAdd = { ...newParticipant, id: newId };
-    
-    setParticipants(prev => [...prev, participantToAdd]);
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Участник добавлен",
-      description: `${newParticipant.lastName} ${newParticipant.firstName} успешно добавлен в систему.`
-    });
-    
-    // Reset form
-    setNewParticipant({
-      snils: "",
-      lastName: "",
-      firstName: "",
-      middleName: "",
-      birthDate: "",
-      phone: "",
-      email: "",
-      representativeName: "",
-      representativePhone: "",
-      representativeEmail: "",
-      schoolId: 1,
-      classId: 1
-    });
+  const handleEditParticipant = (data: any) => {
+    if (selectedParticipant) {
+      updateMutation.mutate({ id: selectedParticipant.id, data });
+    }
+  };
+
+  const handleDeleteParticipant = () => {
+    if (selectedParticipant) {
+      deleteMutation.mutate(selectedParticipant.id);
+    }
+  };
+
+  const handleShowDetails = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleEditClick = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleExportData = () => {
-    // In a real app, this would generate a CSV/Excel file
+    // Export functionality
+    const csv = [
+      ["ID", "Фамилия ученика", "Имя ученика", "Отчество ученика", "Фамилия наставника", "Имя наставника", "Отчество наставника", "Статус", "Баллы"],
+      ...filteredParticipants.map((p: Participant) => [
+        p.id,
+        p.student?.last_name || "",
+        p.student?.first_name || "",
+        p.student?.middle_name || "",
+        p.mentor?.last_name || "",
+        p.mentor?.first_name || "",
+        p.mentor?.middle_name || "",
+        p.status,
+        p.points
+      ])
+    ]
+    .map(row => row.join(","))
+    .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "участники.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
     toast({
-      title: "Экспорт данных",
-      description: "Данные об участниках успешно экспортированы."
+      title: "Данные экспортированы",
+      description: "Данные об участии успешно экспортированы в CSV"
     });
   };
 
+  const statusOptions = Array.from(new Set(participants.map((p: Participant) => p.status))).filter(Boolean);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Участники</h1>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleExportData}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">Участие в проектах</h1>
+        
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+          <Button 
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            onClick={() => refetch()}
+            className="whitespace-nowrap"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Обновить
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="whitespace-nowrap"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Фильтры
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size={isMobile ? "sm" : "default"}
+            onClick={handleExportData}
+            className="whitespace-nowrap"
+          >
             <Download className="h-4 w-4 mr-2" />
             Экспорт
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить участника
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Новый участник</DialogTitle>
-                <DialogDescription>
-                  Заполните информацию о новом участнике
-                </DialogDescription>
-              </DialogHeader>
+          
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            size={isMobile ? "sm" : "default"}
+            className="whitespace-nowrap"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Добавить участие
+          </Button>
+        </div>
+      </div>
+      
+      {isFiltersOpen && (
+        <Card className="bg-gray-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Фильтры</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Наставник</label>
+                <Select value={mentorFilter?.toString() || ""} onValueChange={(val) => setMentorFilter(val ? Number(val) : null)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите наставника" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Все наставники</SelectItem>
+                    {mentors.map((mentor: any) => (
+                      <SelectItem key={mentor.id} value={mentor.id.toString()}>
+                        {mentor.last_name} {mentor.first_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">СНИЛС</label>
-                  <Input 
-                    name="snils"
-                    value={newParticipant.snils}
-                    onChange={handleInputChange}
-                    placeholder="XXX-XXX-XXX XX"
-                  />
+              <div>
+                <label className="text-sm font-medium mb-1 block">Статус</label>
+                <Select value={statusFilter || ""} onValueChange={(val) => setStatusFilter(val || null)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите статус" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Все статусы</SelectItem>
+                    {statusOptions.map((status: string) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Поиск по участникам, наставникам или статусу..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : isError ? (
+        <Card className="bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-500">Ошибка загрузки данных</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{(error as any)?.message || "Произошла ошибка при загрузке данных"}</p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => refetch()}>Повторить</Button>
+          </CardFooter>
+        </Card>
+      ) : (
+        <>
+          {isMobile ? (
+            <div className="space-y-4">
+              {filteredParticipants.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <p className="text-muted-foreground">Участия не найдены</p>
                 </div>
+              ) : (
+                filteredParticipants.map((participant: Participant) => (
+                  <Card key={participant.id} className="overflow-hidden">
+                    <CardHeader className="bg-gray-50 p-4">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">
+                          {participant.student?.last_name} {participant.student?.first_name}
+                        </CardTitle>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleShowDetails(participant)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditClick(participant)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDeleteClick(participant)}
+                            className="text-red-500"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="font-medium">Наставник:</p>
+                          <p>{participant.mentor?.last_name} {participant.mentor?.first_name}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">Статус:</p>
+                          <p>{participant.status}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">Баллы:</p>
+                          <p>{participant.points}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="rounded-md border bg-white overflow-hidden">
+              <Table>
+                <TableHeader className="bg-gray-50">
+                  <TableRow>
+                    <TableHead className="w-[200px]">Участник</TableHead>
+                    <TableHead className="w-[200px]">Наставник</TableHead>
+                    <TableHead className="w-[120px]">Статус</TableHead>
+                    <TableHead className="w-[80px] text-center">Баллы</TableHead>
+                    <TableHead className="text-right">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredParticipants.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        Участия не найдены
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredParticipants.map((participant: Participant) => (
+                      <TableRow key={participant.id}>
+                        <TableCell className="font-medium">
+                          {participant.student?.last_name} {participant.student?.first_name} {participant.student?.middle_name || ''}
+                        </TableCell>
+                        <TableCell>
+                          {participant.mentor?.last_name} {participant.mentor?.first_name} {participant.mentor?.middle_name || ''}
+                        </TableCell>
+                        <TableCell>{participant.status}</TableCell>
+                        <TableCell className="text-center">{participant.points}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleShowDetails(participant)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleEditClick(participant)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(participant)} className="text-red-500">
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          <div className="text-sm text-muted-foreground mt-2">
+            {filteredParticipants.length > 0 && (
+              <p>Показано {filteredParticipants.length} из {participants.length} записей</p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Добавление нового участия</DialogTitle>
+            <DialogDescription>
+              Заполните информацию об участии ученика в проекте с наставником
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ParticipantForm 
+            students={students}
+            mentors={mentors}
+            isLoading={createMutation.isPending}
+            onSubmit={handleCreateParticipant}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Редактирование участия</DialogTitle>
+            <DialogDescription>
+              Измените информацию об участии
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedParticipant && (
+            <ParticipantForm 
+              students={students}
+              mentors={mentors}
+              initialData={{
+                student_id: selectedParticipant.student_id,
+                mentor_id: selectedParticipant.mentor_id,
+                status: selectedParticipant.status,
+                points: selectedParticipant.points
+              }}
+              isLoading={updateMutation.isPending}
+              onSubmit={handleEditParticipant}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление записи об участии</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить эту запись? Это действие невозможно отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteParticipant}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Удаление...
+                </>
+              ) : (
+                "Удалить"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Детали участия</DialogTitle>
+          </DialogHeader>
+          
+          {selectedParticipant && (
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Фамилия</label>
-                  <Input 
-                    name="lastName"
-                    value={newParticipant.lastName}
-                    onChange={handleInputChange}
-                    placeholder="Фамилия"
-                  />
+                  <h3 className="font-semibold mb-2">Информация об участнике</h3>
+                  <div className="space-y-1">
+                    <p><span className="font-medium">ФИО:</span> {selectedParticipant.student?.last_name} {selectedParticipant.student?.first_name} {selectedParticipant.student?.middle_name || ''}</p>
+                    <p><span className="font-medium">СНИЛС:</span> {selectedParticipant.student?.snils}</p>
+                    <p><span className="font-medium">Дата рождения:</span> {new Date(selectedParticipant.student?.birth_date).toLocaleDateString('ru-RU')}</p>
+                  </div>
                 </div>
+                
                 <div>
-                  <label className="text-sm font-medium">Имя</label>
-                  <Input 
-                    name="firstName"
-                    value={newParticipant.firstName}
-                    onChange={handleInputChange}
-                    placeholder="Имя"
-                  />
+                  <h3 className="font-semibold mb-2">Информация о наставнике</h3>
+                  <div className="space-y-1">
+                    <p><span className="font-medium">ФИО:</span> {selectedParticipant.mentor?.last_name} {selectedParticipant.mentor?.first_name} {selectedParticipant.mentor?.middle_name || ''}</p>
+                    <p><span className="font-medium">Место работы:</span> {selectedParticipant.mentor?.workplace}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Отчество</label>
-                  <Input 
-                    name="middleName"
-                    value={newParticipant.middleName}
-                    onChange={handleInputChange}
-                    placeholder="Отчество"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Дата рождения</label>
-                  <Input 
-                    name="birthDate"
-                    type="date"
-                    value={newParticipant.birthDate}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Телефон</label>
-                  <Input 
-                    name="phone"
-                    value={newParticipant.phone}
-                    onChange={handleInputChange}
-                    placeholder="+7 (XXX) XXX-XX-XX"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Email</label>
-                  <Input 
-                    name="email"
-                    type="email"
-                    value={newParticipant.email}
-                    onChange={handleInputChange}
-                    placeholder="email@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">ФИО законного представителя</label>
-                  <Input 
-                    name="representativeName"
-                    value={newParticipant.representativeName}
-                    onChange={handleInputChange}
-                    placeholder="ФИО представителя"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Телефон представителя</label>
-                  <Input 
-                    name="representativePhone"
-                    value={newParticipant.representativePhone}
-                    onChange={handleInputChange}
-                    placeholder="+7 (XXX) XXX-XX-XX"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Email представителя</label>
-                  <Input 
-                    name="representativeEmail"
-                    type="email"
-                    value={newParticipant.representativeEmail}
-                    onChange={handleInputChange}
-                    placeholder="email@example.com"
-                  />
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Информация об участии</h3>
+                <div className="space-y-1">
+                  <p><span className="font-medium">Статус:</span> {selectedParticipant.status}</p>
+                  <p><span className="font-medium">Баллы:</span> {selectedParticipant.points}</p>
                 </div>
               </div>
               
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Отмена</Button>
-                <Button onClick={handleAddParticipant}>Сохранить</Button>
+                <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
+                  Закрыть
+                </Button>
+                <Button onClick={() => {
+                  setIsDetailsDialogOpen(false);
+                  setIsEditDialogOpen(true);
+                }}>
+                  Редактировать
+                </Button>
               </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Поиск по ФИО или СНИЛС..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">СНИЛС</TableHead>
-                <TableHead>Фамилия</TableHead>
-                <TableHead>Имя</TableHead>
-                <TableHead>Отчество</TableHead>
-                <TableHead className="w-[120px]">Дата рождения</TableHead>
-                <TableHead>Email</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredParticipants.map((participant) => (
-                <TableRow key={participant.id}>
-                  <TableCell>{participant.snils}</TableCell>
-                  <TableCell>{participant.lastName}</TableCell>
-                  <TableCell>{participant.firstName}</TableCell>
-                  <TableCell>{participant.middleName}</TableCell>
-                  <TableCell>{new Date(participant.birthDate).toLocaleDateString('ru-RU')}</TableCell>
-                  <TableCell>{participant.email}</TableCell>
-                </TableRow>
-              ))}
-              
-              {filteredParticipants.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4 text-gray-500">
-                    Участники не найдены
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        <div className="mt-4 text-sm text-gray-500">
-          Показано {filteredParticipants.length} из {participants.length} участников
-        </div>
-      </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,5 +1,10 @@
 
 import { supabase } from '@/lib/supabase';
+import { Database } from '@/integrations/supabase/types';
+
+type ParticipationRow = Database['public']['Tables']['participation']['Row'];
+type ParticipationInsert = Database['public']['Tables']['participation']['Insert'];
+type ParticipationUpdate = Database['public']['Tables']['participation']['Update'];
 
 export const participationService = {
   async getParticipations() {
@@ -23,36 +28,60 @@ export const participationService = {
         mentor:mentor_id(*)
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
 
-  async createParticipation(participationData: {
-    student_id: number;
-    mentor_id: number;
-    status: string;
-    points: number;
-  }) {
+  async getParticipationsByStudentId(studentId: number) {
+    const { data, error } = await supabase
+      .from('participation')
+      .select(`
+        *,
+        student:student_id(*),
+        mentor:mentor_id(*)
+      `)
+      .eq('student_id', studentId);
+    if (error) throw error;
+    return data;
+  },
+
+  async getParticipationsByMentorId(mentorId: number) {
+    const { data, error } = await supabase
+      .from('participation')
+      .select(`
+        *,
+        student:student_id(*),
+        mentor:mentor_id(*)
+      `)
+      .eq('mentor_id', mentorId);
+    if (error) throw error;
+    return data;
+  },
+
+  async createParticipation(participationData: ParticipationInsert) {
     const { data, error } = await supabase
       .from('participation')
       .insert(participationData)
-      .select();
+      .select(`
+        *,
+        student:student_id(*),
+        mentor:mentor_id(*)
+      `);
     if (error) throw error;
     return data[0];
   },
 
-  async updateParticipation(id: number, updates: {
-    student_id?: number;
-    mentor_id?: number;
-    status?: string;
-    points?: number;
-  }) {
+  async updateParticipation(id: number, updates: ParticipationUpdate) {
     const { data, error } = await supabase
       .from('participation')
       .update(updates)
       .eq('id', id)
-      .select();
+      .select(`
+        *,
+        student:student_id(*),
+        mentor:mentor_id(*)
+      `);
     if (error) throw error;
     return data[0];
   },
@@ -64,5 +93,12 @@ export const participationService = {
       .eq('id', id);
     if (error) throw error;
     return { success: true };
+  },
+  
+  async getParticipationStatistics() {
+    const { data, error } = await supabase
+      .rpc('get_participation_statistics');
+    if (error) throw error;
+    return data;
   }
 };
