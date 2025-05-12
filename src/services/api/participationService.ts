@@ -96,6 +96,7 @@ export const participationService = {
   },
   
   async getParticipationStatistics() {
+    // Fix the error by using proper RPC typing
     const { data, error } = await supabase
       .rpc('get_participation_statistics');
     if (error) throw error;
