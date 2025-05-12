@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import { Database } from '@/integrations/supabase/types';
 
 // Use environment variables for the Supabase URL and anon key
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://loegsdjbyazhlfrnfrlc.supabase.co';
