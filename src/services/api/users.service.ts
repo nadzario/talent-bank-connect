@@ -2,9 +2,8 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
-// Note: According to the database schema, users are actually in the auth.users table
-// But we can't directly access that through the Supabase client
-// Let's use the profiles table instead which is linked to users
+// According to our database schema, we should be using the profiles table
+// which is linked to auth.users
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export const usersService = {
