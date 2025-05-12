@@ -96,7 +96,6 @@ export const participationService = {
   },
   
   async getParticipationStatistics() {
-    // Fix: Remove any parameters in the RPC call, as it seems the function doesn't accept any
     const { data, error } = await supabase
       .rpc('get_participation_statistics');
     if (error) throw error;
