@@ -9,6 +9,32 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      academic_profiles: {
+        Row: {
+          direction_id: number
+          id: number
+          name: string
+        }
+        Insert: {
+          direction_id: number
+          id?: never
+          name: string
+        }
+        Update: {
+          direction_id?: number
+          id?: never
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_profiles_direction_id_fkey"
+            columns: ["direction_id"]
+            isOneToOne: false
+            referencedRelation: "directions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           id: number
@@ -37,6 +63,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      directions: {
+        Row: {
+          id: number
+          is_olympiad_only: boolean
+          name: string
+        }
+        Insert: {
+          id?: never
+          is_olympiad_only?: boolean
+          name: string
+        }
+        Update: {
+          id?: never
+          is_olympiad_only?: boolean
+          name?: string
+        }
+        Relationships: []
       }
       events: {
         Row: {
@@ -71,6 +115,30 @@ export type Database = {
           stage?: string | null
           title?: string
           type?: string
+        }
+        Relationships: []
+      }
+      mentors: {
+        Row: {
+          first_name: string
+          id: number
+          last_name: string
+          middle_name: string | null
+          workplace: string
+        }
+        Insert: {
+          first_name: string
+          id?: never
+          last_name: string
+          middle_name?: string | null
+          workplace: string
+        }
+        Update: {
+          first_name?: string
+          id?: never
+          last_name?: string
+          middle_name?: string | null
+          workplace?: string
         }
         Relationships: []
       }
@@ -122,6 +190,87 @@ export type Database = {
         }
         Relationships: []
       }
+      olympiads: {
+        Row: {
+          academic_year: string
+          event_id: number
+          id: number
+          points: number
+          profile_id: number
+          stage: Database["public"]["Enums"]["olympiad_stage"]
+        }
+        Insert: {
+          academic_year: string
+          event_id: number
+          id?: never
+          points?: number
+          profile_id: number
+          stage: Database["public"]["Enums"]["olympiad_stage"]
+        }
+        Update: {
+          academic_year?: string
+          event_id?: number
+          id?: never
+          points?: number
+          profile_id?: number
+          stage?: Database["public"]["Enums"]["olympiad_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "olympiads_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "olympiads_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "academic_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participation: {
+        Row: {
+          id: number
+          mentor_id: number
+          points: number
+          status: string
+          student_id: number
+        }
+        Insert: {
+          id?: never
+          mentor_id: number
+          points?: number
+          status: string
+          student_id: number
+        }
+        Update: {
+          id?: never
+          mentor_id?: number
+          points?: number
+          status?: string
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participation_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participation_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           id: string
@@ -154,6 +303,48 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          date: string | null
+          event_id: number
+          id: number
+          location: string | null
+          name: string
+          profile_id: number
+        }
+        Insert: {
+          date?: string | null
+          event_id: number
+          id?: never
+          location?: string | null
+          name: string
+          profile_id: number
+        }
+        Update: {
+          date?: string | null
+          event_id?: number
+          id?: never
+          location?: string | null
+          name?: string
+          profile_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "academic_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -249,8 +440,9 @@ export type Database = {
     }
     Enums: {
       notification_type: "TIP" | "NEWS"
+      olympiad_stage: "SCHOOL" | "MUNICIPAL" | "REGIONAL" | "FINAL"
       recipient_type: "MUNICIPALITY" | "SCHOOL" | "ALL"
-      user_role: "ADMIN" | "MUNICIPALITY" | "SCHOOL"
+      user_role: "ADMIN" | "MUNICIPALITY" | "SCHOOL" | "ERUDIT"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -367,8 +559,9 @@ export const Constants = {
   public: {
     Enums: {
       notification_type: ["TIP", "NEWS"],
+      olympiad_stage: ["SCHOOL", "MUNICIPAL", "REGIONAL", "FINAL"],
       recipient_type: ["MUNICIPALITY", "SCHOOL", "ALL"],
-      user_role: ["ADMIN", "MUNICIPALITY", "SCHOOL"],
+      user_role: ["ADMIN", "MUNICIPALITY", "SCHOOL", "ERUDIT"],
     },
   },
 } as const

@@ -33,7 +33,7 @@ export const usersService = {
   }) {
     // Check if role is valid according to database schema
     // Ensure it matches the available roles in the database
-    const role = profile.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL";
+    const role = profile.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL" | "ERUDIT";
     
     const { data, error } = await supabase
       .from('profiles')
@@ -55,7 +55,7 @@ export const usersService = {
   }) {
     // Check if role is valid according to database schema
     const validUpdates = {
-      ...(updates.role && { role: updates.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL" }),
+      ...(updates.role && { role: updates.role as "ADMIN" | "MUNICIPALITY" | "SCHOOL" | "ERUDIT" }),
       ...(updates.school_id !== undefined && { school_id: updates.school_id }),
       ...(updates.municipality_id !== undefined && { municipality_id: updates.municipality_id })
     };

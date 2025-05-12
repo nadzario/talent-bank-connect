@@ -9,6 +9,12 @@ import { schoolService } from './schoolService';
 import { classService } from './classService';
 import { studentsService } from './students.service';
 import { usersService } from './users.service';
+import { mentorsService } from './mentorsService';
+import { participationService } from './participationService';
+import { directionsService } from './directionsService';
+import { academicProfileService } from './academicProfileService';
+import { projectsService } from './projectsService';
+import { olympiadsService } from './olympiadsService';
 
 export const api = {
   // Events
@@ -53,4 +59,46 @@ export const api = {
   // Classes
   getClasses: classService.getClasses,
   createClass: classService.createClass,
+
+  // Mentors
+  getMentors: mentorsService.getMentors,
+  getMentorById: mentorsService.getMentorById,
+  createMentor: mentorsService.createMentor,
+  updateMentor: mentorsService.updateMentor,
+  deleteMentor: mentorsService.deleteMentor,
+
+  // Participation
+  getParticipations: participationService.getParticipations,
+  getParticipationById: participationService.getParticipationById,
+  createParticipation: participationService.createParticipation,
+  updateParticipation: participationService.updateParticipation,
+  deleteParticipation: participationService.deleteParticipation,
+
+  // Academic Directions
+  getDirections: directionsService.getDirections,
+  getDirectionById: directionsService.getDirectionById,
+  createDirection: directionsService.createDirection,
+  updateDirection: directionsService.updateDirection,
+  deleteDirection: directionsService.deleteDirection,
+
+  // Academic Profiles
+  getAcademicProfiles: academicProfileService.getProfiles,
+  getAcademicProfileById: academicProfileService.getProfileById,
+  createAcademicProfile: academicProfileService.createProfile,
+  updateAcademicProfile: academicProfileService.updateProfile,
+  deleteAcademicProfile: academicProfileService.deleteProfile,
+
+  // Projects
+  getProjects: projectsService.getProjects,
+  getProjectById: projectsService.getProjectById,
+  createProject: projectsService.createProject,
+  updateProject: projectsService.updateProject,
+  deleteProject: projectsService.deleteProject,
+
+  // Olympiads
+  getOlympiads: olympiadsService.getOlympiads,
+  getOlympiadById: olympiadsService.getOlympiadById,
+  createOlympiad: olympiadsService.createOlympiad,
+  updateOlympiad: olympiadsService.updateOlympiad,
+  deleteOlympiad: olympiadsService.deleteOlympiad,
 };
