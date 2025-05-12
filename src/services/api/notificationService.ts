@@ -1,10 +1,25 @@
 
 import { supabase } from "@/lib/supabase";
-import { NotificationType, RecipientType } from "@/hooks/use-notifications";
+import { Database } from "@/integrations/supabase/types";
+
+export type NotificationType = Database['public']['Enums']['notification_type'];
+export type RecipientType = Database['public']['Enums']['recipient_type'];
+
+export interface Notification {
+  id: number;
+  created_at: string;
+  is_read: boolean;
+  recipient_id: number | null;
+  recipient_type: RecipientType;
+  text: string;
+  title: string;
+  type: NotificationType;
+}
 
 export const notificationService = {
   async getNotifications() {
     try {
+      console.log('Fetching notifications...');
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -14,6 +29,7 @@ export const notificationService = {
         console.error('Error fetching notifications:', error);
         throw error;
       }
+      console.log('Notifications fetched successfully:', data);
       return data || [];
     } catch (error) {
       console.error('Error fetching notifications:', error);

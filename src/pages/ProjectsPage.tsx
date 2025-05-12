@@ -16,21 +16,29 @@ const ProjectsPage = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [projects, setProjects] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true);
+      setError(null);
       try {
+        console.log('Fetching events for projects page...');
         const events = await api.getEvents();
+        console.log('Events received:', events);
+        
         // Filter only project type events
         const projectEvents = events.filter(event => event.type === 'project');
+        console.log('Filtered project events:', projectEvents);
+        
         setProjects(projectEvents);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
+      } catch (err: any) {
+        console.error('Error fetching projects:', err);
+        setError(err?.message || 'Не удалось загрузить проекты');
         toast({
           title: "Ошибка загрузки",
-          description: "Не удалось загрузить проекты",
+          description: "Не удалось загрузить проекты: " + (err?.message || ''),
           variant: "destructive"
         });
       } finally {
@@ -52,6 +60,21 @@ const ProjectsPage = () => {
 
   if (loading) {
     return <div className="py-10 text-center">Загрузка проектов...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="py-10 text-center">
+        <div className="text-red-500 font-medium mb-2">Ошибка загрузки данных</div>
+        <div className="text-sm text-gray-600">{error}</div>
+        <Button 
+          onClick={() => window.location.reload()}
+          className="mt-4"
+        >
+          Попробовать снова
+        </Button>
+      </div>
+    );
   }
 
   return (

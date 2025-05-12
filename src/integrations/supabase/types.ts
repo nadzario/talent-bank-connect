@@ -158,42 +158,6 @@ export type Database = {
           },
         ]
       }
-      "public.events": {
-        Row: {
-          academic_year: string | null
-          created_at: string
-          date: string | null
-          id: number
-          location: string | null
-          profile: string
-          stage: string | null
-          title: string
-          type: string
-        }
-        Insert: {
-          academic_year?: string | null
-          created_at?: string
-          date?: string | null
-          id?: number
-          location?: string | null
-          profile: string
-          stage?: string | null
-          title: string
-          type: string
-        }
-        Update: {
-          academic_year?: string | null
-          created_at?: string
-          date?: string | null
-          id?: number
-          location?: string | null
-          profile?: string
-          stage?: string | null
-          title?: string
-          type?: string
-        }
-        Relationships: []
-      }
       schools: {
         Row: {
           id: number

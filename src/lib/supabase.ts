@@ -1,8 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import { Database } from '@/integrations/supabase/types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gxsqlyjdkfjwscukhukq.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c3FseWpka2Zqd3NjdWtodWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY5NjEzNDMsImV4cCI6MjA2MjUzNzM0M30.YQD5ChOjAS-jUN4yklw8ydFMWUVtlV5wi10E242SdVY';
+const supabaseUrl = 'https://loegsdjbyazhlfrnfrlc.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZWdzZGpieWF6aGxmcm5mcmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTkwNjIsImV4cCI6MjA2MjM3NTA2Mn0.VTBpHHMvQlRVN_nLTb94T34giI3idpcfYYgdGPtITrQ';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

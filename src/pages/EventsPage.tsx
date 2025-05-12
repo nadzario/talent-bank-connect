@@ -17,19 +17,24 @@ import {
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     async function fetchEvents() {
       setLoading(true);
+      setError(null);
       try {
+        console.log('Fetching events for events page...');
         const eventsData = await api.getEvents();
+        console.log('Events received:', eventsData);
         setEvents(eventsData);
-      } catch (error) {
-        console.error('Error fetching events:', error);
+      } catch (err: any) {
+        console.error('Error fetching events:', err);
+        setError(err?.message || 'Не удалось загрузить события');
         toast({
           title: "Ошибка загрузки",
-          description: "Не удалось загрузить события",
+          description: "Не удалось загрузить события: " + (err?.message || ''),
           variant: "destructive"
         });
       } finally {
@@ -66,6 +71,21 @@ const EventsPage: React.FC = () => {
 
   if (loading) {
     return <div className="py-10 text-center">Загрузка событий...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="py-10 text-center">
+        <div className="text-red-500 font-medium mb-2">Ошибка загрузки данных</div>
+        <div className="text-sm text-gray-600">{error}</div>
+        <Button 
+          onClick={() => window.location.reload()}
+          className="mt-4"
+        >
+          Попробовать снова
+        </Button>
+      </div>
+    );
   }
 
   return (

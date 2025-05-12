@@ -1,5 +1,8 @@
 
 import { supabase } from "@/lib/supabase";
+import { Database } from "@/integrations/supabase/types";
+
+export type EventRow = Database['public']['Tables']['events']['Row'];
 
 export interface Event {
   id: number;
@@ -16,6 +19,7 @@ export interface Event {
 export const eventService = {
   async getEvents(): Promise<Event[]> {
     try {
+      console.log('Fetching events...');
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -25,6 +29,8 @@ export const eventService = {
         console.error('Error fetching events:', error);
         throw error;
       }
+      
+      console.log('Events fetched successfully:', data);
       
       // Map the data to the Event interface
       return (data || []).map(event => ({

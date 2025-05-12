@@ -2,9 +2,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationType, RecipientType } from "@/services/api/notificationService";
 
-export type NotificationType = "TIP" | "NEWS";
-export type RecipientType = "MUNICIPALITY" | "SCHOOL" | "ALL";
+export type { NotificationType, RecipientType };
 
 export interface Notification {
   id: number;
@@ -28,11 +28,14 @@ export const useNotifications = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching notifications from hook...');
       const data = await api.getNotifications();
+      console.log('Notifications received in hook:', data);
       setNotifications(data);
-    } catch (e) {
-      setError("Failed to fetch notifications");
-      console.error("Failed to fetch notifications:", e);
+    } catch (e: any) {
+      const errorMessage = "Failed to fetch notifications: " + (e?.message || '');
+      setError(errorMessage);
+      console.error(errorMessage, e);
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить уведомления",
