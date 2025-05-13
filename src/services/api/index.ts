@@ -14,7 +14,7 @@ import { participationService } from './participationService';
 import { directionsService } from './directionsService';
 import { academicProfileService } from './academicProfileService';
 import { projectsService } from './projectsService';
-import { olympiadsService } from './olympiadsService';
+import { olympiadsService, getParticipationStatistics } from './participationService';
 
 export const api = {
   // Events
@@ -73,6 +73,7 @@ export const api = {
   createParticipation: participationService.createParticipation,
   updateParticipation: participationService.updateParticipation,
   deleteParticipation: participationService.deleteParticipation,
+  getParticipationStatistics,
 
   // Academic Directions
   getDirections: directionsService.getDirections,

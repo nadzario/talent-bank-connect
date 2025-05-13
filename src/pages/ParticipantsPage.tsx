@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -75,6 +74,25 @@ export type Participant = {
     workplace: string;
     [key: string]: any;
   };
+};
+
+type Mentor = {
+  id: number;
+  last_name: string;
+  first_name: string;
+  middle_name?: string;
+  workplace: string;
+  [key: string]: any;
+};
+
+type Student = {
+  id: number;
+  last_name: string;
+  first_name: string;
+  middle_name?: string;
+  snils: string;
+  birth_date: string;
+  [key: string]: any;
 };
 
 const ParticipantsPage: React.FC = () => {
@@ -168,7 +186,7 @@ const ParticipantsPage: React.FC = () => {
   });
 
   // Filter and search participants
-  const filteredParticipants = participants.filter((participant: Participant) => {
+  const filteredParticipants = Array.isArray(participants) ? participants.filter((participant: Participant) => {
     const matchesSearch = searchQuery === "" || 
       participant.student?.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       participant.student?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -180,7 +198,7 @@ const ParticipantsPage: React.FC = () => {
     const matchesStatus = statusFilter === null || participant.status === statusFilter;
     
     return matchesSearch && matchesMentor && matchesStatus;
-  });
+  }) : [];
 
   // Handlers
   const handleCreateParticipant = (data: any) => {
@@ -247,7 +265,9 @@ const ParticipantsPage: React.FC = () => {
     });
   };
 
-  const statusOptions = Array.from(new Set(participants.map((p: Participant) => p.status))).filter(Boolean);
+  const statusOptions = Array.isArray(participants) 
+    ? Array.from(new Set(participants.map((p: Participant) => p.status))).filter(Boolean)
+    : [];
 
   return (
     <div className="space-y-6">
