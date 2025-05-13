@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from "react";
+
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardContent, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardDescription 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
@@ -32,9 +34,10 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Download, Plus, Search } from "lucide-react";
+import { Award, Download, Filter, Plus, Search, Calendar } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Olympiad {
   id: number;
@@ -97,7 +100,8 @@ const mockOlympiads: Olympiad[] = [
 const OlympiadsPage: React.FC = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [olympiads, setOlympiads] = useState<Olympiad[]>(mockOlympiads);
+  const [filteredOlympiads, setFilteredOlympiads] = useState<Olympiad[]>(mockOlympiads);
+  const [allOlympiads] = useState<Olympiad[]>(mockOlympiads);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -108,34 +112,43 @@ const OlympiadsPage: React.FC = () => {
     profile: "",
     date: ""
   });
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [selectedOlympiad, setSelectedOlympiad] = useState<Olympiad | null>(null);
-
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const filterOlympiads = useCallback(() => {
-    let filtered = olympiads;
+    let filtered = [...allOlympiads];
+    
     if (startDate) {
       filtered = filtered.filter(olympiad => new Date(olympiad.date) >= startDate);
     }
+    
     if (endDate) {
       filtered = filtered.filter(olympiad => new Date(olympiad.date) <= endDate);
     }
+    
     if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(olympiad => {
-        const matchesSearch = olympiad.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          olympiad.profile.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesSearch;
+        return olympiad.name.toLowerCase().includes(query) || 
+               olympiad.profile.toLowerCase().includes(query);
       });
     }
-    if (selectedYear) {
+    
+    if (selectedYear && selectedYear !== "all") {
       filtered = filtered.filter(olympiad => olympiad.academicYear === selectedYear);
     }
-    if (selectedStage) {
+    
+    if (selectedStage && selectedStage !== "all") {
       filtered = filtered.filter(olympiad => olympiad.stage === selectedStage);
     }
-    setOlympiads(filtered);
-  }, [startDate, endDate, searchQuery, selectedYear, selectedStage, olympiads]);
+    
+    setFilteredOlympiads(filtered);
+  }, [startDate, endDate, searchQuery, selectedYear, selectedStage, allOlympiads]);
+
+  // Apply filters whenever any filter changes
+  useEffect(() => {
+    filterOlympiads();
+  }, [startDate, endDate, searchQuery, selectedYear, selectedStage, filterOlympiads]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -153,19 +166,20 @@ const OlympiadsPage: React.FC = () => {
   };
 
   const handleAddOlympiad = () => {
-    const newId = Math.max(...olympiads.map(o => o.id)) + 1;
+    const newId = Math.max(...allOlympiads.map(o => o.id)) + 1;
     const olympiadToAdd = { 
       ...newOlympiad, 
       id: newId,
       participants: 0
     };
 
-    setOlympiads(prev => [...prev, olympiadToAdd]);
+    setFilteredOlympiads(prev => [...prev, olympiadToAdd]);
     setIsDialogOpen(false);
 
     toast({
       title: "Олимпиада добавлена",
-      description: `"${newOlympiad.name}" успешно добавлена в систему.`
+      description: `"${newOlympiad.name}" успешно добавлена в систему.`,
+      duration: 3000,
     });
 
     setNewOlympiad({
@@ -180,7 +194,8 @@ const OlympiadsPage: React.FC = () => {
   const handleExportData = () => {
     toast({
       title: "Экспорт данных",
-      description: "Данные об олимпиадах успешно экспортированы."
+      description: "Данные об олимпиадах успешно экспортированы.",
+      duration: 3000,
     });
   };
 
@@ -190,29 +205,34 @@ const OlympiadsPage: React.FC = () => {
     setSearchQuery("");
     setStartDate(undefined);
     setEndDate(undefined);
-    filterOlympiads();
+    setFilteredOlympiads(allOlympiads);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Award className="h-6 w-6 text-bank-blue mr-2" />
-          <h1 className="text-2xl font-bold">Олимпиады</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <Award className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Олимпиады</h1>
+            <p className="text-sm text-muted-foreground">Управление олимпиадами и результатами</p>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleExportData}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={handleExportData} className="gap-2">
+            <Download className="h-4 w-4" />
             Экспорт
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
                 Добавить олимпиаду
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Новая олимпиада</DialogTitle>
                 <DialogDescription>
@@ -220,7 +240,7 @@ const OlympiadsPage: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-4 py-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Название олимпиады</Label>
                   <Input 
@@ -229,10 +249,11 @@ const OlympiadsPage: React.FC = () => {
                     value={newOlympiad.name}
                     onChange={handleInputChange}
                     placeholder="Введите название олимпиады"
+                    className="w-full"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="academicYear">Учебный год</Label>
                     <Select 
@@ -277,6 +298,7 @@ const OlympiadsPage: React.FC = () => {
                     value={newOlympiad.profile}
                     onChange={handleInputChange}
                     placeholder="Например: Математика, Информатика и т.д."
+                    className="w-full"
                   />
                 </div>
 
@@ -288,11 +310,12 @@ const OlympiadsPage: React.FC = () => {
                     type="date"
                     value={newOlympiad.date}
                     onChange={handleInputChange}
+                    className="w-full"
                   />
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="pt-4">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Отмена</Button>
                 <Button onClick={handleAddOlympiad}>Сохранить</Button>
               </DialogFooter>
@@ -301,112 +324,146 @@ const OlympiadsPage: React.FC = () => {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Фильтры и поиск</CardTitle>
+      <Card className="border-none shadow-md">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl">Фильтры и поиск</CardTitle>
+              <CardDescription>Найдите нужные олимпиады с помощью фильтров</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-primary">
+              Сбросить все фильтры
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Поиск по названию или профилю..."
                 className="pl-10"
                 value={searchQuery}
-                onChange={(e) => {setSearchQuery(e.target.value); filterOlympiads();}}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select value={selectedYear || undefined} onValueChange={(value) => {setSelectedYear(value); filterOlympiads();}}>
-              <SelectTrigger>
-                <SelectValue placeholder="Учебный год" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все годы</SelectItem>
-                <SelectItem value="2024-2025">2024-2025</SelectItem>
-                <SelectItem value="2023-2024">2023-2024</SelectItem>
-                <SelectItem value="2022-2023">2022-2023</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedStage || undefined} onValueChange={(value) => {setSelectedStage(value); filterOlympiads();}}>
-              <SelectTrigger>
-                <SelectValue placeholder="Этап" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все этапы</SelectItem>
-                <SelectItem value="Школьный">Школьный</SelectItem>
-                <SelectItem value="Муниципальный">Муниципальный</SelectItem>
-                <SelectItem value="Региональный">Региональный</SelectItem>
-                <SelectItem value="Заключительный">Заключительный</SelectItem>
-              </SelectContent>
-            </Select>
-            <div>
-              <Label htmlFor="start-date">Start Date</Label>
-              <DatePicker 
-                value={startDate} 
-                onChange={setStartDate} 
-                onSelect={() => filterOlympiads()}
-              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="year">Учебный год</Label>
+                <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value)}>
+                  <SelectTrigger id="year" className="w-full">
+                    <SelectValue placeholder="Выберите год" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все годы</SelectItem>
+                    <SelectItem value="2024-2025">2024-2025</SelectItem>
+                    <SelectItem value="2023-2024">2023-2024</SelectItem>
+                    <SelectItem value="2022-2023">2022-2023</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="stage">Этап</Label>
+                <Select value={selectedStage || undefined} onValueChange={(value) => setSelectedStage(value)}>
+                  <SelectTrigger id="stage" className="w-full">
+                    <SelectValue placeholder="Выберите этап" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все этапы</SelectItem>
+                    <SelectItem value="Школьный">Школьный</SelectItem>
+                    <SelectItem value="Муниципальный">Муниципальный</SelectItem>
+                    <SelectItem value="Региональный">Региональный</SelectItem>
+                    <SelectItem value="Заключительный">Заключительный</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Дата начала</Label>
+                <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <DatePicker 
+                    value={startDate} 
+                    onChange={setStartDate}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Дата окончания</Label>
+                <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <DatePicker 
+                    value={endDate} 
+                    onChange={setEndDate}
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="end-date">End Date</Label>
-              <DatePicker 
-                value={endDate} 
-                onChange={setEndDate} 
-                onSelect={() => filterOlympiads()}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 text-right">
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Сбросить фильтры
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Название</TableHead>
-              <TableHead className="w-28">Уч. год</TableHead>
-              <TableHead className="w-32">Этап</TableHead>
-              <TableHead className="w-28">Профиль</TableHead>
-              <TableHead className="w-28">Дата</TableHead>
-              <TableHead className="text-right w-28">Участников</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {olympiads.map((olympiad) => (
-              <TableRow key={olympiad.id}>
-                <TableCell className="font-medium">{olympiad.name}</TableCell>
-                <TableCell>{olympiad.academicYear}</TableCell>
-                <TableCell>{olympiad.stage}</TableCell>
-                <TableCell>{olympiad.profile}</TableCell>
-                <TableCell>{new Date(olympiad.date).toLocaleDateString('ru-RU')}</TableCell>
-                <TableCell className="text-right">{olympiad.participants}</TableCell>
-              </TableRow>
-            ))}
-
-            {olympiads.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  <div className="flex flex-col items-center justify-center">
-                    <Award className="h-8 w-8 text-gray-300 mb-2" />
-                    <p>Олимпиады не найдены</p>
-                    <Button variant="link" onClick={clearFilters} className="mt-2">Сбросить фильтры</Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-
-        <div className="p-4 border-t text-sm text-gray-500">
-          Показано {olympiads.length} из {mockOlympiads.length} олимпиад
-        </div>
-      </div>
+      <Card className="border-none shadow-md overflow-hidden">
+        {filteredOlympiads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Award className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <h3 className="text-xl font-medium mb-2">Олимпиады не найдены</h3>
+            <p className="text-muted-foreground mb-4">По заданным критериям не найдено ни одной олимпиады</p>
+            <Button variant="outline" onClick={clearFilters}>Сбросить фильтры</Button>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-medium">Название</TableHead>
+                    <TableHead className="font-medium w-28">Уч. год</TableHead>
+                    <TableHead className="font-medium w-32">Этап</TableHead>
+                    <TableHead className="font-medium w-28">Профиль</TableHead>
+                    <TableHead className="font-medium w-28">Дата</TableHead>
+                    <TableHead className="font-medium text-right w-28">Участников</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOlympiads.map((olympiad) => (
+                    <TableRow 
+                      key={olympiad.id}
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                      <TableCell className="font-medium">{olympiad.name}</TableCell>
+                      <TableCell>{olympiad.academicYear}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          olympiad.stage === 'Школьный' ? 'bg-green-100 text-green-800' :
+                          olympiad.stage === 'Муниципальный' ? 'bg-blue-100 text-blue-800' :
+                          olympiad.stage === 'Региональный' ? 'bg-purple-100 text-purple-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {olympiad.stage}
+                        </span>
+                      </TableCell>
+                      <TableCell>{olympiad.profile}</TableCell>
+                      <TableCell>{new Date(olympiad.date).toLocaleDateString('ru-RU')}</TableCell>
+                      <TableCell className="text-right font-medium">{olympiad.participants}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="p-4 border-t bg-muted/10 text-sm text-muted-foreground flex justify-between items-center">
+              <span>Показано {filteredOlympiads.length} из {allOlympiads.length} олимпиад</span>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <span>{filteredOlympiads.length !== allOlympiads.length ? "Применены фильтры" : "Без фильтров"}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
     </div>
   );
 };
