@@ -34,10 +34,11 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Download, Filter, Plus, Search, Calendar } from "lucide-react";
+import { Award, Download, Filter, Plus, Search, Calendar, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Olympiad {
   id: number;
@@ -99,12 +100,14 @@ const mockOlympiads: Olympiad[] = [
 
 const OlympiadsPage: React.FC = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredOlympiads, setFilteredOlympiads] = useState<Olympiad[]>(mockOlympiads);
   const [allOlympiads] = useState<Olympiad[]>(mockOlympiads);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(!isMobile);
   const [newOlympiad, setNewOlympiad] = useState<Omit<Olympiad, 'id' | 'participants'>>({
     name: "",
     academicYear: "2024-2025",
@@ -114,6 +117,11 @@ const OlympiadsPage: React.FC = () => {
   });
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  // Close filters by default on mobile
+  useEffect(() => {
+    setIsFiltersOpen(!isMobile);
+  }, [isMobile]);
 
   const filterOlympiads = useCallback(() => {
     let filtered = [...allOlympiads];
@@ -208,31 +216,41 @@ const OlympiadsPage: React.FC = () => {
     setFilteredOlympiads(allOlympiads);
   };
 
+  const toggleFilters = () => {
+    setIsFiltersOpen(!isFiltersOpen);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 md:mb-6">
         <div className="flex items-center space-x-3">
           <div className="bg-primary/10 p-2 rounded-lg">
-            <Award className="h-6 w-6 text-primary" />
+            <Award className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Олимпиады</h1>
-            <p className="text-sm text-muted-foreground">Управление олимпиадами и результатами</p>
+            <h1 className="text-xl md:text-2xl font-bold">Олимпиады</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">Управление олимпиадами и результатами</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleExportData} className="gap-2">
-            <Download className="h-4 w-4" />
-            Экспорт
+          <Button 
+            variant="outline" 
+            onClick={handleExportData} 
+            className="gap-2 text-xs md:text-sm"
+            size={isMobile ? "sm" : "default"}
+          >
+            <Download className="h-3 w-3 md:h-4 md:w-4" />
+            {!isMobile && "Экспорт"}
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Добавить олимпиаду
+              <Button className="gap-2 text-xs md:text-sm" size={isMobile ? "sm" : "default"}>
+                <Plus className="h-3 w-3 md:h-4 md:w-4" />
+                {!isMobile && "Добавить олимпиаду"}
+                {isMobile && "Добавить"}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Новая олимпиада</DialogTitle>
                 <DialogDescription>
@@ -324,94 +342,124 @@ const OlympiadsPage: React.FC = () => {
         </div>
       </div>
 
-      <Card className="border-none shadow-md">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
+      {/* Search bar - always visible */}
+      <div className="relative">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по названию или профилю..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="md:hidden" 
+            onClick={toggleFilters}
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters card - can be toggled on mobile */}
+      {isFiltersOpen && (
+        <Card className="border-none shadow-md">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-xl">Фильтры и поиск</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Фильтры</CardTitle>
               <CardDescription>Найдите нужные олимпиады с помощью фильтров</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-primary">
-              Сбросить все фильтры
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Поиск по названию или профилю..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearFilters} 
+                className="text-primary text-xs md:text-sm"
+              >
+                Сбросить все фильтры
+              </Button>
+              {isMobile && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={toggleFilters}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="year">Учебный год</Label>
-                <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value)}>
-                  <SelectTrigger id="year" className="w-full">
-                    <SelectValue placeholder="Выберите год" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все годы</SelectItem>
-                    <SelectItem value="2024-2025">2024-2025</SelectItem>
-                    <SelectItem value="2023-2024">2023-2024</SelectItem>
-                    <SelectItem value="2022-2023">2022-2023</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="stage">Этап</Label>
-                <Select value={selectedStage || undefined} onValueChange={(value) => setSelectedStage(value)}>
-                  <SelectTrigger id="stage" className="w-full">
-                    <SelectValue placeholder="Выберите этап" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все этапы</SelectItem>
-                    <SelectItem value="Школьный">Школьный</SelectItem>
-                    <SelectItem value="Муниципальный">Муниципальный</SelectItem>
-                    <SelectItem value="Региональный">Региональный</SelectItem>
-                    <SelectItem value="Заключительный">Заключительный</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="start-date">Дата начала</Label>
-                <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <DatePicker 
-                    value={startDate} 
-                    onChange={setStartDate}
-                  />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="year">Учебный год</Label>
+                  <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value)}>
+                    <SelectTrigger id="year" className="w-full">
+                      <SelectValue placeholder="Выберите год" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все годы</SelectItem>
+                      <SelectItem value="2024-2025">2024-2025</SelectItem>
+                      <SelectItem value="2023-2024">2023-2024</SelectItem>
+                      <SelectItem value="2022-2023">2022-2023</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="stage">Этап</Label>
+                  <Select value={selectedStage || undefined} onValueChange={(value) => setSelectedStage(value)}>
+                    <SelectTrigger id="stage" className="w-full">
+                      <SelectValue placeholder="Выберите этап" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все этапы</SelectItem>
+                      <SelectItem value="Школьный">Школьный</SelectItem>
+                      <SelectItem value="Муниципальный">Муниципальный</SelectItem>
+                      <SelectItem value="Региональный">Региональный</SelectItem>
+                      <SelectItem value="Заключительный">Заключительный</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="start-date">Дата начала</Label>
+                  <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <DatePicker 
+                      value={startDate} 
+                      onChange={setStartDate}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="end-date">Дата окончания</Label>
+                  <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <DatePicker 
+                      value={endDate} 
+                      onChange={setEndDate}
+                    />
+                  </div>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="end-date">Дата окончания</Label>
-                <div className="flex items-center space-x-2 w-full border rounded-md px-3 py-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <DatePicker 
-                    value={endDate} 
-                    onChange={setEndDate}
-                  />
-                </div>
-              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-none shadow-md overflow-hidden">
         {filteredOlympiads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Award className="h-12 w-12 text-muted-foreground/40 mb-4" />
             <h3 className="text-xl font-medium mb-2">Олимпиады не найдены</h3>
-            <p className="text-muted-foreground mb-4">По заданным критериям не найдено ни одной олимпиады</p>
+            <p className="text-muted-foreground mb-4 text-center px-4">По заданным критериям не найдено ни одной олимпиады</p>
             <Button variant="outline" onClick={clearFilters}>Сбросить фильтры</Button>
           </div>
         ) : (
@@ -421,10 +469,10 @@ const OlympiadsPage: React.FC = () => {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="font-medium">Название</TableHead>
-                    <TableHead className="font-medium w-28">Уч. год</TableHead>
+                    {!isMobile && <TableHead className="font-medium w-28">Уч. год</TableHead>}
                     <TableHead className="font-medium w-32">Этап</TableHead>
-                    <TableHead className="font-medium w-28">Профиль</TableHead>
-                    <TableHead className="font-medium w-28">Дата</TableHead>
+                    {!isMobile && <TableHead className="font-medium w-28">Профиль</TableHead>}
+                    {!isMobile && <TableHead className="font-medium w-28">Дата</TableHead>}
                     <TableHead className="font-medium text-right w-28">Участников</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -434,8 +482,17 @@ const OlympiadsPage: React.FC = () => {
                       key={olympiad.id}
                       className="hover:bg-muted/50 transition-colors cursor-pointer"
                     >
-                      <TableCell className="font-medium">{olympiad.name}</TableCell>
-                      <TableCell>{olympiad.academicYear}</TableCell>
+                      <TableCell className="font-medium">
+                        <div>
+                          {olympiad.name}
+                          {isMobile && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {olympiad.profile} • {new Date(olympiad.date).toLocaleDateString('ru-RU')}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      {!isMobile && <TableCell>{olympiad.academicYear}</TableCell>}
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           olympiad.stage === 'Школьный' ? 'bg-green-100 text-green-800' :
@@ -446,18 +503,18 @@ const OlympiadsPage: React.FC = () => {
                           {olympiad.stage}
                         </span>
                       </TableCell>
-                      <TableCell>{olympiad.profile}</TableCell>
-                      <TableCell>{new Date(olympiad.date).toLocaleDateString('ru-RU')}</TableCell>
+                      {!isMobile && <TableCell>{olympiad.profile}</TableCell>}
+                      {!isMobile && <TableCell>{new Date(olympiad.date).toLocaleDateString('ru-RU')}</TableCell>}
                       <TableCell className="text-right font-medium">{olympiad.participants}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-            <div className="p-4 border-t bg-muted/10 text-sm text-muted-foreground flex justify-between items-center">
+            <div className="p-3 md:p-4 border-t bg-muted/10 text-xs md:text-sm text-muted-foreground flex flex-col md:flex-row justify-between md:items-center gap-2">
               <span>Показано {filteredOlympiads.length} из {allOlympiads.length} олимпиад</span>
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
+                <Filter className="h-3 w-3 md:h-4 md:w-4" />
                 <span>{filteredOlympiads.length !== allOlympiads.length ? "Применены фильтры" : "Без фильтров"}</span>
               </div>
             </div>

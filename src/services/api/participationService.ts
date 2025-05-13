@@ -1,104 +1,78 @@
-
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/integrations/supabase/types';
 
-type ParticipationRow = Database['public']['Tables']['participation']['Row'];
-type ParticipationInsert = Database['public']['Tables']['participation']['Insert'];
-type ParticipationUpdate = Database['public']['Tables']['participation']['Update'];
+type OlympiadStage = Database['public']['Enums']['olympiad_stage'];
 
-export const participationService = {
-  async getParticipations() {
+export const olympiadsService = {
+  async getOlympiads() {
     const { data, error } = await supabase
-      .from('participation')
+      .from('olympiads')
       .select(`
         *,
-        student:student_id(*),
-        mentor:mentor_id(*)
+        profile:profile_id(*),
+        event:event_id(*)
       `);
     if (error) throw error;
     return data;
   },
 
-  async getParticipationById(id: number) {
+  async getOlympiadById(id: number) {
     const { data, error } = await supabase
-      .from('participation')
+      .from('olympiads')
       .select(`
         *,
-        student:student_id(*),
-        mentor:mentor_id(*)
+        profile:profile_id(*),
+        event:event_id(*)
       `)
       .eq('id', id)
-      .maybeSingle();
+      .single();
     if (error) throw error;
     return data;
   },
 
-  async getParticipationsByStudentId(studentId: number) {
+  async createOlympiad(olympiadData: {
+    academic_year: string;
+    stage: OlympiadStage;
+    points: number;
+    profile_id: number;
+    event_id: number;
+  }) {
     const { data, error } = await supabase
-      .from('participation')
-      .select(`
-        *,
-        student:student_id(*),
-        mentor:mentor_id(*)
-      `)
-      .eq('student_id', studentId);
-    if (error) throw error;
-    return data;
-  },
-
-  async getParticipationsByMentorId(mentorId: number) {
-    const { data, error } = await supabase
-      .from('participation')
-      .select(`
-        *,
-        student:student_id(*),
-        mentor:mentor_id(*)
-      `)
-      .eq('mentor_id', mentorId);
-    if (error) throw error;
-    return data;
-  },
-
-  async createParticipation(participationData: ParticipationInsert) {
-    const { data, error } = await supabase
-      .from('participation')
-      .insert(participationData)
-      .select(`
-        *,
-        student:student_id(*),
-        mentor:mentor_id(*)
-      `);
+      .from('olympiads')
+      .insert(olympiadData)
+      .select();
     if (error) throw error;
     return data[0];
   },
 
-  async updateParticipation(id: number, updates: ParticipationUpdate) {
+  async updateOlympiad(id: number, updates: {
+    academic_year?: string;
+    stage?: OlympiadStage;
+    points?: number;
+    profile_id?: number;
+    event_id?: number;
+  }) {
     const { data, error } = await supabase
-      .from('participation')
+      .from('olympiads')
       .update(updates)
       .eq('id', id)
-      .select(`
-        *,
-        student:student_id(*),
-        mentor:mentor_id(*)
-      `);
+      .select();
     if (error) throw error;
     return data[0];
   },
 
-  async deleteParticipation(id: number) {
+  async deleteOlympiad(id: number) {
     const { error } = await supabase
-      .from('participation')
+      .from('olympiads')
       .delete()
       .eq('id', id);
     if (error) throw error;
     return { success: true };
-  },
-  
-  async getParticipationStatistics() {
-    const { data, error } = await supabase
-      .rpc('get_participation_statistics');
-    if (error) throw error;
-    return data;
   }
+};
+
+export const getParticipationStatistics = async () => {
+  const { data, error } = await supabase.rpc('get_participation_statistics');
+  if (error) throw error;
+  return data;
 };
