@@ -74,7 +74,8 @@ export const olympiadsService = {
 
 // Fix the RPC call to properly type the parameters
 export const getParticipationStatistics = async () => {
-  const { data, error } = await supabase.rpc('get_participation_statistics', {});
+  // The empty object needs to be cast as any to avoid the type error
+  const { data, error } = await supabase.rpc('get_participation_statistics', {} as any);
   if (error) throw error;
   return data;
 };
