@@ -91,6 +91,7 @@ export type Database = {
           location: string | null
           profile: string
           stage: string | null
+          status_id: number | null
           title: string
           type: string
         }
@@ -102,6 +103,7 @@ export type Database = {
           location?: string | null
           profile: string
           stage?: string | null
+          status_id?: number | null
           title: string
           type: string
         }
@@ -113,8 +115,47 @@ export type Database = {
           location?: string | null
           profile?: string
           stage?: string | null
+          status_id?: number | null
           title?: string
           type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "participation_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      logs: {
+        Row: {
+          created_at: string | null
+          event_group_id: number | null
+          event_type: string
+          id: number
+          is_archived: boolean | null
+          target_id: number
+          target_table: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_group_id?: number | null
+          event_type: string
+          id?: never
+          is_archived?: boolean | null
+          target_id: number
+          target_table: string
+        }
+        Update: {
+          created_at?: string | null
+          event_group_id?: number | null
+          event_type?: string
+          id?: never
+          is_archived?: boolean | null
+          target_id?: number
+          target_table?: string
         }
         Relationships: []
       }
@@ -237,21 +278,21 @@ export type Database = {
           id: number
           mentor_id: number
           points: number
-          status: string
+          status_id: number | null
           student_id: number
         }
         Insert: {
           id?: never
           mentor_id: number
           points?: number
-          status: string
+          status_id?: number | null
           student_id: number
         }
         Update: {
           id?: never
           mentor_id?: number
           points?: number
-          status?: string
+          status_id?: number | null
           student_id?: number
         }
         Relationships: [
@@ -263,6 +304,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "participation_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "participation_statuses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "participation_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -270,6 +318,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      participation_statuses: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -310,6 +376,7 @@ export type Database = {
       projects: {
         Row: {
           date: string | null
+          description: string | null
           event_id: number
           id: number
           location: string | null
@@ -318,6 +385,7 @@ export type Database = {
         }
         Insert: {
           date?: string | null
+          description?: string | null
           event_id: number
           id?: never
           location?: string | null
@@ -326,6 +394,7 @@ export type Database = {
         }
         Update: {
           date?: string | null
+          description?: string | null
           event_id?: number
           id?: never
           location?: string | null
@@ -439,7 +508,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      notification_type: "TIP" | "NEWS"
+      notification_type: "TIP" | "NEWS" | "NEW_VALUE_1" | "NEW_VALUE_2"
       olympiad_stage: "SCHOOL" | "MUNICIPAL" | "REGIONAL" | "FINAL"
       recipient_type: "MUNICIPALITY" | "SCHOOL" | "ALL"
       user_role: "ADMIN" | "MUNICIPALITY" | "SCHOOL" | "ERUDIT"
@@ -558,7 +627,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      notification_type: ["TIP", "NEWS"],
+      notification_type: ["TIP", "NEWS", "NEW_VALUE_1", "NEW_VALUE_2"],
       olympiad_stage: ["SCHOOL", "MUNICIPAL", "REGIONAL", "FINAL"],
       recipient_type: ["MUNICIPALITY", "SCHOOL", "ALL"],
       user_role: ["ADMIN", "MUNICIPALITY", "SCHOOL", "ERUDIT"],
