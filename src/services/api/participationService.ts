@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/integrations/supabase/types';
 
@@ -73,7 +74,7 @@ export const olympiadsService = {
 
 // Fix the RPC call to properly type the parameters
 export const getParticipationStatistics = async () => {
-  const { data, error } = await supabase.rpc('get_participation_statistics');
+  const { data, error } = await supabase.rpc('get_participation_statistics', {});
   if (error) throw error;
   return data;
 };
