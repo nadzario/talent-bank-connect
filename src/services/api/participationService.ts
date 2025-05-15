@@ -72,7 +72,9 @@ export const olympiadsService = {
   }
 };
 
+// Fix the RPC call to properly type the parameters
 export const getParticipationStatistics = async () => {
+  // Remove the parameter that was causing the type error
   const { data, error } = await supabase.rpc('get_participation_statistics');
   if (error) throw error;
   return data;
